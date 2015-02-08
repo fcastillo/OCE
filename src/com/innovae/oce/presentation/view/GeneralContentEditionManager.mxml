@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="768" height="430" initialize="init()">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.oce.application.event.getAreasEvent;
+			import com.innovae.oce.application.event.removeVersionStyleEvent;
+			import com.innovae.oce.domain.datamodel.Base;
+			import com.innovae.services.orona.evolutio.type.T_area;
+			import com.innovae.services.orona.evolutio.type.T_area_type;
+			import com.innovae.services.orona.evolutio.type.T_detailedversion;
+			import com.innovae.services.orona.evolutio.type.T_directory_style;
+			import com.innovae.services.orona.evolutio.type.T_floor;
+			import com.innovae.services.orona.evolutio.type.T_version_style;
+			
+			import flash.filters.GlowFilter;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.XMLListCollection;
+			import mx.controls.Alert;
+			import mx.controls.menuClasses.MenuBarItem;
+			import mx.events.CloseEvent;
+			import mx.events.ColorPickerEvent;
+			import mx.events.DragEvent;
+			import mx.events.FlexEvent;
+			import mx.events.MenuEvent;
+			
+			import spark.events.IndexChangeEvent;
+			import spark.events.TextOperationEvent;
+			
+			protected function img_rollOverHandler(evt:MouseEvent):void 
+			{
+				Image(evt.currentTarget).filters = [new GlowFilter(0x40b30e,1.0,6.0,6.0,5,1,false,false)];
+			}
+			
+			protected function img1_rollOutHandler(evt:MouseEvent):void 
+			{
+				Image(evt.currentTarget).filters = [];
+			}
+			
+			[Bindable]
+			public var menuBarCollection:XMLListCollection;
+			private var menubarXML:XMLList =
+				<>
+					<menuitem label="Contenidos VDAP Area 1" 	data="1"/>
+					<menuitem label="Contenidos VDAP Area 3" 	data="2"/>
+					<menuitem label="Contenidos VDAP Area 4" 	data="3"/>
+				</>;
+			/*
+			private var menubarXML:XMLList =
+				<>
+					<menuitem label="Contenidos VDAP" 	data="0">
+						<menuitem label="Area 1" 		data="1"/>
+						<menuitem label="Area 3" 		data="2"/>
+						<menuitem label="Area 4" 		data="3"/>
+					</menuitem> 
+					<menuitem label="Contenidos VDAP isla" 	data="4"/>
+				</>;
+			*/
+			protected function init():void
+			{
+				Base.getinstance();
+				menuBarCollection = new XMLListCollection(menubarXML);
+			}
+
+			
+			protected function menuClickHandler1(event:MenuEvent):void
+			{
+				
+				//var mb:MenuBar=event.target.menuBar as MenuBar;
+				try
+				{
+					var mb:MenuBar=event.target as MenuBar;
+					var selectedIndex:int=mb.selectedIndex;
+					
+					for (var i:int=0;i<mb.menuBarItems.length;i++){
+						if(i==selectedIndex){
+							(mb.menuBarItems[i] as MenuBarItem).setStyle("color", "0x0B7600");
+							(mb.menuBarItems[i] as MenuBarItem).setStyle("fontWeight", "bold");
+						}
+						else{
+							(mb.menuBarItems[i] as MenuBarItem).setStyle("color", "0x000000");
+							(mb.menuBarItems[i] as MenuBarItem).setStyle("fontWeight", "normal");
+						}
+					}
+	
+					trace((event.item as XML).@data);
+					switch(String((event.item as XML).@data))
+					{
+						case "0": break;
+						case "1":
+							Base.getinstance().areas = new ArrayCollection();
+							Base.getinstance().versionEdition_preAsignedAreaContent = new T_area();
+							Base.getinstance().versionEdition_selectedAreaContent	= new T_area();
+							Base.getinstance().versionedition_selectedAreaContentType = Base.getinstance().area1_type;
+							Base.getinstance().getAreas(Base.getinstance().versionedition_selectedAreaContentType); 
+							break;
+						case "2":
+							Base.getinstance().areas = new ArrayCollection();
+							Base.getinstance().versionEdition_preAsignedAreaContent = new T_area();
+							Base.getinstance().versionEdition_selectedAreaContent	= new T_area();
+							Base.getinstance().versionedition_selectedAreaContentType = Base.getinstance().area3_type;
+							Base.getinstance().getAreas(Base.getinstance().versionedition_selectedAreaContentType);
+							break;
+						case "3":
+							Base.getinstance().areas = new ArrayCollection();
+							Base.getinstance().versionEdition_preAsignedAreaContent = new T_area();
+							Base.getinstance().versionEdition_selectedAreaContent	= new T_area();
+							Base.getinstance().versionedition_selectedAreaContentType = Base.getinstance().area4_type;
+							Base.getinstance().getAreas(Base.getinstance().versionedition_selectedAreaContentType);
+							break;
+						case "4":
+							Base.getinstance().areas = new ArrayCollection();
+							Base.getinstance().versionEdition_preAsignedAreaContent = new T_area();
+							Base.getinstance().versionEdition_selectedAreaContent	= new T_area();
+							Base.getinstance().versionedition_selectedAreaContentType = Base.getinstance().area_isla_type;
+							Base.getinstance().getAreas(Base.getinstance().versionedition_selectedAreaContentType);
+							break;
+						case "5":break;
+						case "6":break;
+						default: break;
+					}
+				} catch (error:Error) {trace("error: "+error.message+".");	}
+			}
+			
+			protected function contentModify_handler(event:MouseEvent):void
+			{
+				Base.getinstance().versionEdition = false;
+				trace("["+Base.getinstance().versionEdition_selectedAreaContent.id+"]");
+				trace(Base.getinstance().versionEdition_selectedAreaContent.name);
+				trace(" -> type ("+Base.getinstance().versionEdition_selectedAreaContent.type.id+")");
+				trace("["+Base.getinstance().versionEdition_selectedAreaContent.id+"]"+Base.getinstance().versionEdition_selectedAreaContent.name+" -> type ("+Base.getinstance().versionEdition_selectedAreaContent.type.id+")");
+				if (Base.getinstance().versionEdition_selectedAreaContent.type.id == Base.getinstance().area_isla_type)
+				{
+					Base.getinstance().versionEdition_selectedAreaContent_Op = Base.getinstance().version_op_modify_isla;
+					Base.getinstance().versionOpFromAreaGetVersion(Base.getinstance().versionEdition_selectedAreaContent);
+				}
+				else
+				{
+					Base.getinstance().areaContentOp(Base.getinstance().area_content_modify, true);
+				}
+			}
+			
+			protected function menuClickHandler(event:MouseEvent):void
+			{
+				try
+				{
+					var mb:MenuBar=event.target.parent as MenuBar;
+					var selectedIndex:int=mb.selectedIndex;
+					
+					for (var i:int=0;i<mb.menuBarItems.length;i++){
+						if(i==selectedIndex){
+							(mb.menuBarItems[i] as MenuBarItem).setStyle("color", "0x0B7600");
+							(mb.menuBarItems[i] as MenuBarItem).setStyle("fontWeight", "bold");
+						}
+						else
+						{
+							(mb.menuBarItems[i] as MenuBarItem).setStyle("color", "0x000000");
+							(mb.menuBarItems[i] as MenuBarItem).setStyle("fontWeight", "normal");
+						}
+					}
+					
+					if ((event.currentTarget != null) && (event.currentTarget.selectedIndex != null))
+					{
+						/*switch(String(event.currentTarget.selectedIndex))
+						{
+							case "0":
+								break;
+							case "1":
+								Base.getinstance().areas = new ArrayCollection();
+								Base.getinstance().versionEdition_preAsignedAreaContent = new T_area();
+								Base.getinstance().versionEdition_selectedAreaContent	= new T_area();
+								Base.getinstance().versionedition_selectedAreaContentType = Base.getinstance().area_isla_type;
+								Base.getinstance().getAreas(Base.getinstance().versionedition_selectedAreaContentType);
+								break;
+							case "2":
+							case "4": break;
+							case "5": break;
+							case "6": break;
+							case "7": break;
+							default: break;
+						}
+						*/
+						var item:XML = XML(event.target.data);
+						switch(String(item.@data[0]))
+						{
+							case "1":
+								Base.getinstance().areas = new ArrayCollection();
+								Base.getinstance().versionEdition_preAsignedAreaContent = new T_area();
+								Base.getinstance().versionEdition_selectedAreaContent	= new T_area();
+								Base.getinstance().versionedition_selectedAreaContentType = Base.getinstance().area1_type;
+								Base.getinstance().getAreas(Base.getinstance().versionedition_selectedAreaContentType); 
+							break;
+							case "2":
+								Base.getinstance().areas = new ArrayCollection();
+								Base.getinstance().versionEdition_preAsignedAreaContent = new T_area();
+								Base.getinstance().versionEdition_selectedAreaContent	= new T_area();
+								Base.getinstance().versionedition_selectedAreaContentType = Base.getinstance().area3_type;
+								Base.getinstance().getAreas(Base.getinstance().versionedition_selectedAreaContentType);
+							break;
+							case "3":
+								Base.getinstance().areas = new ArrayCollection();
+								Base.getinstance().versionEdition_preAsignedAreaContent = new T_area();
+								Base.getinstance().versionEdition_selectedAreaContent	= new T_area();
+								Base.getinstance().versionedition_selectedAreaContentType = Base.getinstance().area4_type;
+								Base.getinstance().getAreas(Base.getinstance().versionedition_selectedAreaContentType);
+							break;
+							default: break;
+						}
+					}
+				} catch (error:Error) {trace("error: "+error.message+".");	}
+			}
+			
+			protected function contentNew_handler(event:MouseEvent):void
+			{
+				Base.getinstance().versionEdition = false;
+				if (Base.getinstance().versionedition_selectedAreaContentType == Base.getinstance().area_isla_type)
+				{
+					Base.getinstance().versionEdition_selectedAreaContent_Op = Base.getinstance().version_op_new_isla;
+					Base.getinstance().versionOp(Base.getinstance().version_op_new_isla, 0);
+				}
+				else
+				{
+					Base.getinstance().areaContentOp(Base.getinstance().area_content_new, true);
+				}
+			}
+			
+			protected function contentDelete_handler(event:MouseEvent):void
+			{
+				Base.getinstance().versionEdition = false;
+				Base.getinstance().areaContentOp(Base.getinstance().area_content_remove_from_server, true);
+			}
+			
+			protected function contentNewFrom_handler(event:MouseEvent):void
+			{
+				Base.getinstance().versionEdition = false;
+				if (Base.getinstance().versionedition_selectedAreaContentType == Base.getinstance().area_isla_type)
+				{
+					Base.getinstance().versionEdition_selectedAreaContent_Op = Base.getinstance().version_op_new_isla_from;
+					Base.getinstance().versionOp(Base.getinstance().version_op_new_isla_from, Base.getinstance().versionEdition_selectedAreaContent.id);
+				}
+				else
+				{
+					Base.getinstance().areaContentOp(Base.getinstance().area_content_new_from, true);
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		
+	</fx:Declarations>
+<!-- click="cambiarEstiloDirectorioClick(event)" -->
+<!--	<s:Group id="areaContentSelection" x="71" y="47" width="627" height="324" borderVisible="true"
+				   close="hideTitleWindows()" fontFamily="Verdana" fontSize="10"
+				   title="Edición de área:"  visible="false">
+	-->
+	<mx:MenuBar width="100%" 
+				labelField="@label"
+				dataProvider="{menuBarCollection}"
+				click="menuClickHandler(event)"
+				itemClick="menuClickHandler1(event)"
+				/>
+		<s:List x="10" y="50" width="287" height="139"
+				alternatingItemColors="[#EEEEEE, #FFFFFFF]" focusColor="#A9FF83"
+				fontFamily="Verdana" fontSize="10" lineThrough="false" rollOverColor="#A9FF83"
+				selectedIndex="2" selectionColor="#A9FF83" textAlign="center"
+				verticalScrollPolicy="on" 
+				dataProvider="{Base.getinstance().areas}"
+				itemRenderer="com.innovae.oce.presentation.view.item_renderer.versionEditionAreaContentSelection"/>
+		<s:Label x="31" y="34" fontWeight="bold" text="Seleccione un contenido:"/>
+		<s:Label x="312" y="34" fontWeight="bold" text="Descripción del contenido seleccionado:"/>
+		<s:Label x="29" y="201" fontWeight="bold" text="Modifique el contenido seleccionado."  />
+		<s:Image id="icon_mod" x="10" y="197" 
+				 click="contentModify_handler(event)" 
+				 source="@Embed('assets/add.png')"  rollOver="img_rollOverHandler(event);" rollOut="img1_rollOutHandler(event);"/>
+		<s:Label x="29" y="223" fontWeight="bold" text="Cree un nuevo contenido a partir del seleccionado." />
+		<s:Label x="29" y="245" fontWeight="bold" text="Cree un contenido nuevo." />
+		<s:Image id="icon_new" x="10" y="241" 
+				 click="contentNew_handler(event)" 
+				 source="@Embed('assets/add.png')"  rollOver="img_rollOverHandler(event);" rollOut="img1_rollOutHandler(event);"/>
+		<s:Image id="icon_new_from" x="10" y="219" 
+				 click="contentNewFrom_handler(event)" 
+				 source="@Embed('assets/add.png')"  rollOver="img_rollOverHandler(event);" rollOut="img1_rollOutHandler(event);"/>
+		<s:Image x="10" y="30" source="@Embed('assets/open.png')"  rollOver="img_rollOverHandler(event);" rollOut="img1_rollOutHandler(event);"/>
+		<s:TextArea x="310" y="50" width="303" height="139" text="{Base.getinstance().versionEdition_selectedAreaContent.description}"/>
+	<s:Label x="29" y="267" fontWeight="bold" text="Eliminar contenido seleccionado." />
+	<s:Image id="icon_new0" x="10" y="263" 
+			 click="contentDelete_handler(event)" 
+			 source="@Embed('assets/add.png')"  rollOver="img_rollOverHandler(event);" rollOut="img1_rollOutHandler(event);"/>
+	<!--</s:Group>-->
+	
+	
+</s:Group>

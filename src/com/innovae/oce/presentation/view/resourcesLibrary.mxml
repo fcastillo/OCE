@@ -1,0 +1,706 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:HGroup xmlns:fx="http://ns.adobe.com/mxml/2009"
+		  xmlns:s="library://ns.adobe.com/flex/spark"
+		  xmlns:mx="library://ns.adobe.com/flex/mx"
+		  xmlns:resources="resources.*"
+		  width="696" height="500" creationComplete="group1_creationCompleteHandler(event)"
+		  enterFrame="resourcesLibrary_enterFrameHandler(event)" horizontalAlign="center"
+		  textAlign="left">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.oce.application.command.deleteResourceCommand;
+			import com.innovae.oce.application.event.deleteResourceEvent;
+			import com.innovae.oce.application.event.uploadResourcesEvent;
+			import com.innovae.oce.domain.datamodel.Base;
+			import com.innovae.services.orona.evolutio.type.T_resource;
+			import com.innovae.services.orona.evolutio.type.T_resource_type;
+			
+			import flash.filters.GlowFilter;
+			
+			import mx.collections.ICollectionView;
+			import mx.collections.XMLListCollection;
+			import mx.controls.Alert;
+			import mx.controls.menuClasses.MenuBarItem;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.events.MenuEvent;
+			import mx.events.ResourceEvent;
+			import mx.events.StateChangeEvent;
+			
+			import org.osmf.events.LoadEvent;
+			import org.osmf.events.TimeEvent;
+			
+			protected function img_rollOverHandler(evt:MouseEvent):void {
+				Image(evt.currentTarget).filters = [new GlowFilter(0x40b30e,1.0,6.0,6.0,5,1,false,false)];
+			}
+			
+			protected function img1_rollOutHandler(evt:MouseEvent):void {
+				Image(evt.currentTarget).filters = [];
+			}
+			
+			private var fileReferenceList:FileReferenceList;
+			private var fileReference:FileReference;
+			private var resource_type:T_resource_type;
+			
+			[Bindable] private var visible_picture:Boolean = true;
+			[Bindable] private var visible_video:Boolean = false;
+			[Bindable] private var visible_swf:Boolean = false;
+			[Bindable] private var resource_swf_load_complete:Boolean = false;
+			[Bindable] private var resource_swf_worig:Number = -1;
+			[Bindable] private var resource_swf_horig:Number = -1;
+			
+			/*
+			[Bindable] public var menubarXML:XMLList =
+				<>
+					<menuitem label="Imágenes" 	data="0"/>
+					<menuitem label="Vídeos" 	data="1"/>
+					<menuitem label="SWF" 		data="2"/>
+				</>;
+			*/
+			[Bindable] public var menubarXML:XMLList =
+				<>
+					<menuitem label="Imágenes" 	data="0"/>
+					<menuitem label="Vídeos" 	data="1"/>
+				</>;
+			
+			[Bindable] public var menuBarCollection:XMLListCollection = new XMLListCollection();
+			
+			protected function uploadResource():void
+			{
+				resource_type = new T_resource_type();
+				resource_type.id = Base.getinstance().resourcesList_resource_type.id;
+				resource_type.type_name = "";
+				fileReferenceList = new FileReferenceList();
+				fileReferenceList.addEventListener(Event.SELECT, resourceSelected);
+				fileReferenceList.browse(new Array(getImageTypeFilter()));				
+				
+				resource_swf.addEventListener(ErrorEvent.ERROR, swf_resource_ErrorHandler);
+			}
+			
+			private function getImageTypeFilter():FileFilter {
+				if (Base.getinstance().resourcesList_resource_type.id == Base.getinstance().picture_resource_id)
+				{
+					return new FileFilter("Images (*.jpg, *.jpeg, *.gif, *.png)", "*.jpg;*.jpeg;*.gif;*.png");	
+				}
+				else if (Base.getinstance().resourcesList_resource_type.id == Base.getinstance().video_resource_id)
+				{
+					return new FileFilter("Videos (*.flv, *.f4v, *.mp4, *.mov, *.avi, *.wmv)", "*.flv;*.f4v;*.mp4;*.mov;*.avi;*.wmv");	
+				}
+				else if (Base.getinstance().resourcesList_resource_type.id == Base.getinstance().swf_resource_id)
+				{
+					return new FileFilter("SWF (*.swf)", "*.swf");	
+				}
+				return new FileFilter("Todos (*.*","*.*");
+			}
+			
+			private function resourceSelected(event:Event):void {
+				var fileReferenceList:FileReferenceList = FileReferenceList(event.target);
+				var fileList:Array = fileReferenceList.fileList;
+				
+				
+				// get the first file that the user chose
+				fileReference = FileReference(fileList[0]);
+				//trace("TAMAÑO: "+fileReference.size);
+				if (fileReference.size > (50*1024*1024))
+				{
+					Alert.show(Base.getinstance().i18n_txt.getValue("resource_too_big_text"),Base.getinstance().i18n_txt.getValue("resource_too_big_title"), Alert.OK);
+				}
+				else
+				{
+					stopSounds();
+					Base.getinstance().bloquearInteraccionEnviandoRecurso();
+					fileReference.addEventListener(Event.COMPLETE, resourceLoadComplete);
+					fileReference.load();
+				}
+			}
+			public function resourceLoadComplete(evt:Event):void
+			{
+				fileReference.removeEventListener(Event.COMPLETE, resourceLoadComplete); 
+				//trace("RESOURCE NAME: "+fileReference.name+" - RESOURCE SIZE: "+fileReference.size);
+				new uploadResourcesEvent(uploadResourcesEvent.UPLOAD_RESOURCE, Base.getinstance().user, fileReference.data, fileReference.name, resource_type).dispatch();
+				// upload the file to the server side script
+				// fileReference.addEventListener(Event.COMPLETE, pictureUploadCompleteHandler);
+				// fileReference.addEventListener(ProgressEvent.PROGRESS, pictureUploadCompleteHandler);
+				// fileReference.upload(urlRequest);
+
+				//statusText.text = "Uploading...";
+			}
+			/*
+			private function pictureUploadProgressHandler(event:ProgressEvent):void {
+				var file:FileReference = FileReference(event.target);
+				//trace("progressHandler name=" + file.name + " bytesLoaded=" + event.bytesLoaded + " bytesTotal=" + event.bytesTotal);
+			}
+			private function pictureUploadCompleteHandler(event:Event):void {
+				statusText.text = "File Uploaded: " + event.target.name;
+			}
+			*/
+			
+			protected function group1_creationCompleteHandler(event:FlexEvent):void
+			{
+				clearInfo();
+				
+				menuBarCollection = new XMLListCollection(menubarXML);
+				Base.getinstance().resourcesList_selectedResource = new T_resource();
+				Base.getinstance().resourcesList_resource_type = new T_resource_type();
+				Base.getinstance().resourcesList_resource_type.id = Base.getinstance().picture_resource_id;
+				Base.getinstance().getResources(Base.getinstance().resourcesList_resource_type.id);
+			}
+			
+			protected function imageResourceResize(event:Event):void
+			{
+				// TODO Auto-generated method stub
+				//if (event.currentTarget.bitmapData != null )
+				if(event.currentTarget.bitmapData.width > 1)
+				{
+					Base.getinstance().resourcesList_selectedResource_dimension = event.currentTarget.bitmapData.width + "x" + event.currentTarget.bitmapData.height;
+					if (int(event.currentTarget.bitmapData.width) > 300)  
+					{ 
+						resource_picture.width = 300; 
+					}
+					if (int(event.currentTarget.bitmapData.height) > 300) 
+					{ 
+						resource_picture.height = 300; 
+					}
+				}
+				else
+				{
+					resource_swf.width = 300; resource_swf.height = 300;
+				}
+				if( Math.round((event.currentTarget.bytesTotal / 1024)*1000)/1000 > 1)
+				{
+					Base.getinstance().resourcesList_selectedResource_size = Math.round((event.currentTarget.bytesTotal / 1024)*1000)/1000 + " KB";
+				}
+			}
+			
+			protected function menuClickHandler(event:MouseEvent):void
+			{
+				
+				clearInfo();
+				
+				var mb:MenuBar=event.target.menuBar as MenuBar;
+				var selectedIndex:int=mb.selectedIndex;
+				
+				for (var i:int=0;i<mb.menuBarItems.length;i++){
+					if(i==selectedIndex){
+						(mb.menuBarItems[i] as MenuBarItem).setStyle("color", "0x0B7600");
+						(mb.menuBarItems[i] as MenuBarItem).setStyle("fontWeight", "bold");
+					}
+					else{
+						(mb.menuBarItems[i] as MenuBarItem).setStyle("color", "0x000000");
+						(mb.menuBarItems[i] as MenuBarItem).setStyle("fontWeight", "normal");
+					}
+				}
+				
+				if ((event.currentTarget != null) && (event.currentTarget.selectedIndex != null))
+				{
+					Base.getinstance().resourcesList_resource_type = new T_resource_type();
+					Base.getinstance().resourcesList_selectedResource = new T_resource();
+					stopSounds();
+					switch(String(event.currentTarget.selectedIndex))
+					{
+						case "0":
+							Base.getinstance().resourcesList_resource_type.id = Base.getinstance().picture_resource_id;
+							Base.getinstance().getResources(Base.getinstance().resourcesList_resource_type.id);
+							resource_picture.source = Base.getinstance().resourcesList_selectedResource.url;
+							resource_video.source = null;
+							resource_swf.source = null;
+							break;
+						case "1":
+							Base.getinstance().resourcesList_resource_type.id = Base.getinstance().video_resource_id;
+							Base.getinstance().getResources(Base.getinstance().resourcesList_resource_type.id);
+							resource_picture.source = null;
+							resource_video.source = Base.getinstance().resourcesList_selectedResource.url;
+							resource_swf.source = null;
+							break;
+						case "2":
+							Base.getinstance().resourcesList_resource_type.id = Base.getinstance().swf_resource_id;
+							Base.getinstance().getResources(Base.getinstance().resourcesList_resource_type.id);
+							resource_picture.source = null;
+							resource_video.source = null;
+							resource_swf.source = Base.getinstance().resourcesList_selectedResource.url;
+							break;
+					}
+					reasignar_fuentes();
+
+				}
+			}
+			
+			private function reasignar_fuentes():void
+			{
+				try
+				{
+					switch(Base.getinstance().resourcesList_resource_type.id)
+					{
+						case Base.getinstance().picture_resource_id:
+							//trace("reasignar_fuentes[picture]");
+							resource_picture.source = Base.getinstance().resourcesList_selectedResource.url;
+							resource_video.source = null;
+							resource_swf.unloadAndStop();
+							resource_swf.source = null;
+							break;
+						case Base.getinstance().video_resource_id:
+							//trace("reasignar_fuentes[video]");
+							resource_picture.source = null;
+							resource_video.source = Base.getinstance().resourcesList_selectedResource.url;
+							resource_video.autoPlay = true;
+							resource_swf.unloadAndStop();
+							resource_swf.source = null;
+							break;
+						case Base.getinstance().swf_resource_id:
+							//trace("reasignar_fuentes[swf]");
+							visible_swf 	= true;
+							resource_picture.source = null;
+							resource_video.source = null;
+							resource_swf.unloadAndStop();
+							/*
+							resource_swf = new SWFLoader();
+							resource_swf.visible = visible_swf;
+							resource_swf.doubleClickEnabled=false;
+							resource_swf.loadForCompatibility=true; 
+							resource_swf.scaleContent=true;
+							resource_swf.addEventListener(IOErrorEvent.IO_ERROR,swf_resource_ioErrorHandler);
+							resource_swf.addEventListener(SecurityErrorEvent.SECURITY_ERROR,swf_resource_securityErrorHandler);
+							resource_swf.addEventListener(ProgressEvent.PROGRESS, resource_swf_progressHandler);
+							resource_swf.autoLoad = true;*/
+							try
+								{
+								if (Base.getinstance().resourcesList_selectedResource.url != null)
+								{
+									//resource_swf.source = Base.getinstance().resourcesList_selectedResource.url;
+									var loader:URLLoader=new URLLoader();
+									
+									// binary format since it a SWF
+									loader.dataFormat=URLLoaderDataFormat.BINARY;
+									loader.addEventListener(Event.COMPLETE, onSWFLoaded);
+									
+									//load the file
+									loader.load(new URLRequest(Base.getinstance().resourcesList_selectedResource.url));
+								}
+							}
+							catch ( error:Error ) {}
+							resource_swf.width=300;
+							resource_swf.height=300;
+							resource_swf_worig = -1;
+							resource_swf_horig = -1;
+							resource_swf_load_complete =false;
+							//resource_swf.load(Base.getinstance().resourcesList_selectedResource.url);
+							break;
+					}
+				}
+				catch(error:Error) {}
+				resize_contenedores();
+			}
+			
+			private function stopSounds():void
+			{
+				////trace("***stopSounds()***********************************");
+				resource_swf.unloadAndStop();
+				resource_swf.load(null);
+				flash.media.SoundMixer.stopAll();
+				resource_swf.unloadAndStop();
+			}
+			
+			private function onSWFLoaded(e:Event):void {
+				// remove the event
+				var loader:URLLoader=URLLoader(e.target);
+				loader.removeEventListener(Event.COMPLETE, onSWFLoaded);
+				
+				// add an Application context and allow bytecode execution 
+				var context:LoaderContext=new LoaderContext();
+				//context.allowLoadBytesCodeExecution=true;
+				
+				// set the new context on SWFLoader
+				resource_swf.loaderContext = context;
+				
+				resource_swf.addEventListener(Event.COMPLETE, loadComplete);
+				
+				// load the data from the bytearray
+				resource_swf.load(loader.data);
+			}
+			
+			
+			// your load complete function
+			private function loadComplete(completeEvent:Event):void {
+				resize_contenedores();
+			}
+
+			
+			private function resize_contenedores():void
+			{
+				switch(Base.getinstance().resourcesList_resource_type.id)
+				{
+					case Base.getinstance().picture_resource_id:
+						////trace("resize_contenedores[picture]");
+						visible_picture = true;
+						visible_video 	= false;
+						visible_swf 	= false;
+						//resource_video.source = null;
+						//resource_swf.source = null;
+						resource_picture.width = 300;resource_picture.height = 300;
+						resource_video.width = 0; resource_video.height = 0;
+						resource_swf.width = 0; resource_swf.height = 0;
+						break;
+					case Base.getinstance().video_resource_id:
+		
+						var tamano = Math.round((resource_video.bytesTotal / 1024/1024)*1000)/1000 + "";
+						var porcentaje = 0;
+						if (resource_video.bytesTotal > 0) porcentaje = Math.round((resource_video.bytesLoaded*100/resource_video.bytesTotal));
+						
+						
+						if ( resource_video.bytesLoaded == resource_video.bytesTotal)
+						{
+							Base.getinstance().resourcesList_selectedResource_size = tamano+" MB"; 
+							////trace("resize_contenedores[video] is playing "+resource_video.currentTime);
+							visible_picture = false;
+							visible_video 	= true;
+							visible_swf 	= false;
+							//resource_picture.source = null;
+							//resource_swf.source = null;
+							resource_picture.width = 0;resource_picture.height = 0;
+							resource_video.width = 300; resource_video.height = 300;
+							resource_swf.width = 0; resource_swf.height = 0;
+							Base.getinstance().resource_asignable = true;
+						}
+						else
+						{
+							Base.getinstance().resourcesList_selectedResource_size = tamano+" MB [cargando..."+porcentaje+"%]"; 
+							////trace("resize_contenedores[video] hide "+resource_video.currentTime);
+							visible_picture = false;
+							visible_video 	= false;
+							visible_swf 	= false;
+							//resource_picture.source = null;
+							//resource_swf.source = null;
+							resource_picture.width = 0;resource_picture.height = 0;
+							resource_video.width = 0; resource_video.height = 0;
+							resource_swf.width = 0; resource_swf.height = 0;
+							if (porcentaje < 99) { Base.getinstance().resource_asignable = false; }
+						}
+						break;
+					case Base.getinstance().swf_resource_id:
+						visible_picture = false;
+						visible_video 	= false;
+						visible_swf 	= true;
+						resource_picture.source = null;
+						resource_video.source = null;
+						resource_picture.width = 0;resource_picture.height = 0;
+						resource_video.width = 0; resource_video.height = 0;
+						/*
+						if (resource_swf.height>300) {resource_swf.height = 300;}
+						if (resource_swf.width>300) {resource_swf.width = 300;}
+						*/
+						if (resource_swf.content != null) {
+							//trace(resource_swf.width+"x"+resource_swf.height+" - "+resource_swf.content.width+"x"+resource_swf.content.height);
+							/*
+							if (resource_swf.content.height>300) 
+							{
+								resource_swf.content.width = ( resource_swf.content.width * 300 ) / resource_swf.content.height;
+								resource_swf.content.height = 300; 
+								
+								resource_swf.width	 = resource_swf.content.width;
+								resource_swf.height	 = resource_swf.content.height;
+							}
+							if (resource_swf.content.width>300) 
+							{
+								resource_swf.content.height = ( resource_swf.content.height * 300 ) / resource_swf.content.width;
+								resource_swf.content.width = 300; 
+								
+								resource_swf.width	 = resource_swf.content.width;
+								resource_swf.height	 = resource_swf.content.height;
+							}
+							*/
+							var w:Number = resource_swf.content.width;
+							var h:Number = resource_swf.content.height; 
+							
+							if (resource_swf_worig < 0)
+							{
+								resource_swf_worig = resource_swf.content.width;
+								resource_swf_horig = resource_swf.content.height;
+							}
+							
+							if (h>300) 
+							{
+								w = ( w * 300 ) / h;
+								h = 300; 
+							}
+							if (w>300) 
+							{
+								h = ( h * 300 ) / w;
+								w = 300; 
+							}
+							
+							if (resource_swf_load_complete)
+							{	
+								//trace("[COMPLETE] resize_contenedores[swf] -> pict["+resource_picture.width+"x"+resource_picture.height+"].visible="+resource_picture.visible+" - video["+resource_video.width+"x"+resource_video.height+"].visible="+resource_video.visible+" - swf["+resource_swf.width+"x"+resource_swf.height+"]("+resource_swf.content.width+"x"+resource_swf.content.height+").visible="+resource_swf.visible);
+								//resource_swf.content.width	 = resource_swf.contentWidth;
+								//resource_swf.content.height	 = resource_swf.contentHeight;
+								//resource_swf.width	 = resource_swf_worig;
+								//resource_swf.height	 = resource_swf_horig;
+								resource_swf.width	 = w;
+								resource_swf.height	 = h;
+								resource_swf.includeInLayout = true;
+							}
+							else
+							{
+								//trace("[NO COMPL] resize_contenedores[swf] -> pict["+resource_picture.width+"x"+resource_picture.height+"].visible="+resource_picture.visible+" - video["+resource_video.width+"x"+resource_video.height+"].visible="+resource_video.visible+" - swf["+resource_swf.width+"x"+resource_swf.height+"]("+resource_swf.content.width+"x"+resource_swf.content.height+").visible="+resource_swf.visible);
+								resource_swf.content.width	 = w;
+								resource_swf.content.height	 = h;
+								resource_swf.width	 = w;
+								resource_swf.height	 = h;
+							}
+							
+							//resource_swf.validateSize(true);
+						} 
+						break;
+				}
+			}
+			
+			protected function swf_resource_ioErrorHandler(event:IOErrorEvent):void
+			{
+				//trace("[swf_resource_ioErrorHandler]");
+				resize_contenedores();
+			}
+			
+			protected function swf_resource_securityErrorHandler(event:SecurityErrorEvent):void
+			{
+				//trace("[swf_resource_securityErrorHandler]");
+				resize_contenedores();
+			}
+			
+			protected function swf_resource_ErrorHandler(error:ErrorEvent):void
+			{
+				//trace("[swf_resource_ErrorHandler]");
+				resize_contenedores();
+			}
+			
+			protected function deleteResource():void
+			{
+				clearInfo();
+				new deleteResourceEvent(deleteResourceEvent.REMOVE_RESOURCE, Base.getinstance().user, Base.getinstance().resourcesList_selectedResource).dispatch();
+			}
+			
+			protected function resource_swf_progressHandler(event:ProgressEvent):void
+			{
+				////trace("resource_swf_progressHandler");
+				resize_contenedores();
+			}
+			
+			protected function resource_list_click(event:MouseEvent):void
+			{
+				clearInfo();
+				stopSounds();
+				Base.getinstance().resourcesList_selectedResource = resourceList.selectedItem;
+				try
+				{
+					//trace("seleccionado: "+Base.getinstance().resourcesList_selectedResource.name+" ["+Base.getinstance().resourcesList_selectedResource.url+"]");
+				}
+				catch ( error:Error) {}
+				resize_contenedores();
+				reasignar_fuentes();
+			}
+			
+			protected function resource_swf_completeHandler(event:Event):void
+			{
+				// TODO Auto-generated method stub
+				resource_swf_load_complete = true;
+				resize_contenedores();
+			}
+			
+			protected function resource_swf_updateCompleteHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				if (visible_swf)
+				{
+					resize_contenedores();
+				}
+			}
+			
+			protected function resource_swf_currentStateChangeHandler(event:StateChangeEvent):void
+			{
+				if (visible_swf)
+				{
+					resize_contenedores();
+				}
+			}
+			
+			protected function resource_swf_validHandler(event:FlexEvent):void
+			{
+				if (visible_swf)
+				{
+					resize_contenedores();
+				}
+			}
+			
+			protected function resource_swf_enterFrameHandler(event:Event):void
+			{
+				if (visible_swf)
+				{
+					resize_contenedores();
+				}
+			}
+			
+			
+			protected function resourcesLibrary_enterFrameHandler(event:Event):void
+			{
+				if (Base.getinstance().selected_index != 1)
+				{
+					stopSounds();
+				}
+				else
+				{
+					var selectedIndex:int=Base.getinstance().resourcesList_resource_type.id;
+					if (Base.getinstance().resourcesList_resource_type.id == Base.getinstance().picture_resource_id) selectedIndex = 0; 
+					else if (Base.getinstance().resourcesList_resource_type.id == Base.getinstance().video_resource_id) selectedIndex = 1;
+					//trace(selectedIndex);
+					
+					for (var i:int=0;i<resourcesLibraryMenuBar.menuBarItems.length;i++){
+						if(i==selectedIndex){
+							(resourcesLibraryMenuBar.menuBarItems[i] as MenuBarItem).setStyle("color", "0x0B7600");
+							(resourcesLibraryMenuBar.menuBarItems[i] as MenuBarItem).setStyle("fontWeight", "bold");
+						}
+						else{
+							(resourcesLibraryMenuBar.menuBarItems[i] as MenuBarItem).setStyle("color", "0x000000");
+							(resourcesLibraryMenuBar.menuBarItems[i] as MenuBarItem).setStyle("fontWeight", "normal");
+						}
+					}
+					resize_contenedores();
+				}
+			}
+			
+			protected function resource_video_bytesLoadedChangeHandler(event:LoadEvent):void
+			{
+				// TODO Auto-generated method stub
+				if(event.target.videoObject ==  null) return;
+				if (event.target.videoObject.videoWidth > 1 )
+				{
+					Base.getinstance().resourcesList_selectedResource_dimension = event.target.videoObject.videoWidth + "x" + event.target.videoObject.videoHeight;
+					
+				}
+				else
+				{
+					resource_swf.width = 300; resource_swf.height = 300;
+				}
+				
+				resource_name.text = Base.getinstance().resourcesList_selectedResource.name;
+				var tamano = Math.round((resource_video.bytesTotal / 1024/1024)*1000)/1000 + "";
+				var porcentaje = 0;
+				if (resource_video.bytesTotal > 0) porcentaje = Math.round((resource_video.bytesLoaded*100/resource_video.bytesTotal));
+				if (porcentaje < 100) { Base.getinstance().resourcesList_selectedResource_size = tamano+" MB [cargando..."+porcentaje+"%]"; }
+				else { Base.getinstance().resourcesList_selectedResource_size = Math.round((event.currentTarget.bytesTotal / 1024/1024)*1000)/1000 + " MB"; }
+			}
+			
+			protected function img_progressbar_completeHandler(event:Event):void
+			{
+				img_progressbar.visible = false;
+				
+			}
+			
+			protected function img_progressbar_progressHandler(event:ProgressEvent):void
+			{
+				img_progressbar.visible = true;
+				
+			}
+			
+			protected function titlewindow1_closeHandler(event:CloseEvent):void
+			{
+				// TODO Auto-generated method stub
+				clearInfo();
+			}
+			
+			private function clearInfo():void
+			{
+				resource_picture.source = null;
+				resource_video.source = null;
+				resource_swf.source = null;
+				
+				resource_size.text = "";
+				resource_name.text = "";
+				resource_dimension.text = "";
+			}
+			
+			protected function resourceList_updateCompleteHandler(event:FlexEvent):void
+			{
+				clearInfo();
+			}
+			
+		]]>
+	</fx:Script>
+	<s:TitleWindow width="663" height="435" close="titlewindow1_closeHandler(event)"
+				   fontFamily="Verdana" fontSize="10" title="Librería de recursos">
+		<mx:MenuBar 
+					id="resourcesLibraryMenuBar" x="0" y="0" width="100%" 
+					labelField="@label"
+					dataProvider="{menuBarCollection}"
+					click="menuClickHandler(event)"
+					selectedIndex="{Base.getinstance().resourceLibraryMenuBarSelectedIndex}"
+					/>
+				<s:List id="resourceList" x="0" y="28" width="283" height="308" alternatingItemColors="[#EEEEEE, #FFFFFFF]"
+						focusColor="#C0FCA6" fontFamily="Verdana" fontSize="10"  
+						lineThrough="false"
+						selectionColor="#A9FF83" textAlign="left"
+						verticalScrollPolicy="on" dataProvider="{Base.getinstance().resources}" 
+						itemRenderer="com.innovae.oce.presentation.view.item_renderer.resourceList"
+						click="resource_list_click(event)" updateComplete="resourceList_updateCompleteHandler(event)"/>
+				<s:HGroup x="291" y="44" width="359" height="285" horizontalAlign="center"
+						  verticalAlign="middle">
+					<s:Image id="resource_picture" visible="{visible_picture}"
+							 complete="imageResourceResize(event)" depth="99" smooth="false"
+							 source="{Base.getinstance().resourcesList_selectedResource.url}"/>
+					<s:VideoPlayer id="resource_video"
+							visible="{visible_video}"
+							width="0" height="0"
+							bytesLoadedChange="resource_video_bytesLoadedChangeHandler(event)"
+							/><!--source="{Base.getinstance().resourcesList_selectedResource.url}"-->
+					<s:SWFLoader id="resource_swf" width="0" height="0" visible="false"/>
+					<!--
+								 visible="{visible_swf}"
+								 maxWidth="300" maxHeight="300" 
+								 autoLoad="true"
+								 doubleClickEnabled="false"
+								 scaleContent="true"
+								 loadForCompatibility="true" maintainAspectRatio="true"
+								 includeInLayout="true"
+								 ioError="swf_resource_ioErrorHandler(event)"
+								 progress="resource_swf_progressHandler(event)"
+								 securityError="swf_resource_securityErrorHandler(event)"
+								 complete="resource_swf_completeHandler(event)"
+								 />
+					-->
+								<!--source="{Base.getinstance().resourcesList_selectedResource.url}"-->
+				</s:HGroup>
+				
+				<s:Label id="resourcesLibrary_selectedResourceName" x="292" y="352" fontWeight="bold"
+						 text="{Base.getinstance().i18n_txt.getValue('resourcesLibrary_selectedResourceName')}"/>
+				<s:Label id="resourcesLibrary_selectedResourceProps" x="292" y="337"
+						 fontWeight="bold"
+						 text="{Base.getinstance().i18n_txt.getValue('resourcesLibrary_selectedResourceProps')}"/>
+				<s:Label id="resourcesLibrary_addResource_text" x="27" y="348" fontWeight="bold"
+						 text="{Base.getinstance().i18n_txt.getValue('resourcesLibrary_addResource_text')}"/>
+				<s:Label id="resourcesLibrary_removeResource_text" x="27" y="368" fontWeight="bold"
+						 text="{Base.getinstance().i18n_txt.getValue('resourcesLibrary_removeResource_text')}"/>
+				<s:Label id="resource_name" x="345" y="352" width="307" height="10" maxHeight="30"
+						 fontWeight="normal"
+						 text="{Base.getinstance().resourcesList_selectedResource.name}"/>
+				<s:Label id="resourcesLibrary_selectedResourceDimensions" x="292" y="366"
+						 fontWeight="bold"
+						 text="{Base.getinstance().i18n_txt.getValue('resourcesLibrary_selectedResourceDimensions')}"/>
+				<s:Label id="resource_dimension" x="374" y="366" width="277" fontWeight="normal"
+						 text="{Base.getinstance().resourcesList_selectedResource_dimension}"/>
+				<s:Label id="resourcesLibrary_selectedResourceSize" x="293" y="380" fontWeight="bold"
+						 text="{Base.getinstance().i18n_txt.getValue('resourcesLibrary_selectedResourceSize')}"/>
+				<s:Label id="resource_size" x="345" y="382" width="306" fontWeight="normal"
+						 text="{Base.getinstance().resourcesList_selectedResource_size}"/>
+				<s:Image x="6" y="344" source="@Embed('assets/add.png')" click="uploadResource()"  rollOver="img_rollOverHandler(event);" rollOut="img1_rollOutHandler(event);"/>
+				<s:Image x="6" y="364" source="@Embed('assets/less.png')" click="deleteResource()"  rollOver="img_rollOverHandler(event);" rollOut="img1_rollOutHandler(event);"/>
+		<mx:ProgressBar id="img_progressbar" x="374" y="27" width="200" height="14" label=" "
+						complete="img_progressbar_completeHandler(event)" depth="1" visible="false"
+						labelPlacement="center" progress="img_progressbar_progressHandler(event)"
+						source="resource_picture">
+		</mx:ProgressBar>
+		
+		
+	</s:TitleWindow>
+</s:HGroup>

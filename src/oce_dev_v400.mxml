@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:view="com.innovae.oce.presentation.view.*"
+			   xmlns:business="com.innovaevision.iam.business.*"
+			   xmlns:control="com.innovae.oce.infraestructure.*"
+			   xmlns:local="*"
+			   height="1100" preinitialize="init()">
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.oce.domain.datamodel.Base;
+			import com.innovae.oce.domain.datamodel.BaseEvent;
+			
+			import flash.external.ExternalInterface;
+			
+			import mx.collections.XMLListCollection;
+			import mx.controls.Alert;
+			import mx.controls.menuClasses.MenuBarItem;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.events.MenuEvent;
+			
+			[Bindable]
+			public var menuBarCollection:XMLListCollection;
+			private var menubarXML:XMLList =
+				<>
+					<menuitem label="Gestión de versiones" 	data="0"/>
+					<menuitem label="Librería de recursos" 	data="1"/>
+					<menuitem label="Gestión de contenidos" data="2"/>
+					<menuitem label="" 		data=""/>
+					<menuitem label="" 		data=""/>
+					<menuitem label="" 		data=""/>
+					<menuitem label="" 		data=""/>
+					<menuitem label="" 		data=""/>
+					<menuitem label="" 		data=""/>
+					<menuitem label="" 		data=""/>
+				</>;
+			 
+			[Bindable] public var nextSelectedIndex:int = 0;
+			
+			[Bindable] public var progressBarTimer:Timer;
+			[Bindable] public var progressBarProgress:int = 0;
+
+			
+			/**
+			 * @details	Inicializa el sistema.
+			 * @details	Crea la instancia del modelo de datos Base.
+			 * @details Asigna la vista por defecto.
+			 * @details Carga los menús.
+			 * @details	Inicia el control de inactividad.
+			 * @details	Activa el manejador de cierre de sesión.
+			 * 	
+			 * @author 	Raul Arrieta Brouard [Innovae Vision]
+			 * @author	raul.arrieta@innvoaevision.com
+			 * @author	http://www.innovaevision.com
+			 * @version 0.18.01.2013
+			 * @date 18.01.2013
+			 * 
+			 */
+			protected function init():void
+			{
+				Base.getinstance();
+				Base.getinstance().setVista(this);
+				Base.getinstance().addEventListener(BaseEvent.SHOW_PREVIEW, handle_showPreviewEvent);
+				menuBarCollection = new XMLListCollection(menubarXML);
+				this.addEventListener(MouseEvent.CLICK, Base.getinstance().activityHandler)
+				ExternalInterface.addCallback("cleanUp",cleanUp);
+			}
+			
+			/**
+			 * @details Solicita el cierre de sesión justificado por salida de la aplicación.	
+			 * @author 	Raul Arrieta Brouard [Innovae Vision]
+			 * @author	raul.arrieta@innvoaevision.com
+			 * @author	http://www.innovaevision.com
+			 * @version 0.18.01.2013
+			 * @date 18.01.2013
+			 *
+			 */
+			public function cleanUp():void {   
+				//Base.getinstance().closeSession("app_exit");
+			}
+			
+			/**
+			 * @details	Manejador del menú.
+			 * @author 	Raul Arrieta Brouard [Innovae Vision]
+			 * @author	raul.arrieta@innvoaevision.com
+			 * @author	http://www.innovaevision.com
+			 * @version 0.18.01.2013
+			 * @date 18.01.2013
+			 * 
+			 * @param string $id_pedido					identificador del pedido a tramitar.
+			 * @param string $id_medio_pago				identificador del medio de pago.
+			 * @param string $lang	
+			 *
+			 * @return string	 				devuelve el identificador de cliente.
+			 *
+			 * @private info almacenara la informacion necesaria para tramitar el pedido.
+			 *
+			 */
+			protected function menuClickHandler(event:MouseEvent):void
+			{
+				
+				flash.media.SoundMixer.stopAll();
+				try
+				{
+					var mb:MenuBar=event.target.menuBar as MenuBar;
+					var selectedIndex:int=mb.selectedIndex;
+					
+					for (var i:int=0;i<mb.menuBarItems.length;i++)
+					{
+						if(i==selectedIndex)
+						{
+							(mb.menuBarItems[i] as MenuBarItem).setStyle("color", "0x0B7600");
+							(mb.menuBarItems[i] as MenuBarItem).setStyle("fontWeight", "bold");
+						}
+						else
+						{
+							(mb.menuBarItems[i] as MenuBarItem).setStyle("color", "0x000000");
+							(mb.menuBarItems[i] as MenuBarItem).setStyle("fontWeight", "normal");
+						}
+					}
+					
+					if ((event.currentTarget != null) && (event.currentTarget.selectedIndex != null))
+					{	
+						switch(String(event.currentTarget.selectedIndex))
+						{
+							case "0":
+								Base.getinstance().preShowVersionMenu();
+								break;
+							case "1":
+								Base.getinstance().preShowGeneralResourceLibrary();
+								break;
+							case "2":
+								Base.getinstance().preShowGeneralAreaEditor();
+								break;
+							case "4": break;
+							case "5": break;
+							case "6": break;
+							case "7": break;
+							case "8": break;
+							default: break;
+						}
+				  }
+				} catch (error:Error) {trace("error: "+error.message+".");	}
+			}
+			
+			private function alertListener(eventObj:CloseEvent):void {
+				// Check to see if the OK button was pressed.
+				if (eventObj.detail==Alert.OK) {
+					trace("continar con el cambio de pantalla");
+					procesarCambioPantalla();
+				}
+				else
+				{
+					trace("NO CAMBIAR DE PANTALLA!!! -> seguir con la edición");
+				}
+			}
+			
+			public function procesarCambioPantalla():void
+			{
+				switch(String(this.nextSelectedIndex))
+				{
+					case "0":
+						Base.getinstance().preShowVersionMenu();
+						break;
+					case "1":
+						Base.getinstance().preShowGeneralResourceLibrary();
+						break;
+					case "2":
+						Base.getinstance().preShowGeneralAreaEditor();
+						break;
+					case "4": break;
+					case "5": break;
+					case "6": break;
+					case "7": break;
+					case "8": break;
+					default: break;
+				}
+			}
+			
+			protected function menuItemClickHandler(event:MenuEvent):void
+			{
+				trace("menuItemClickHandler");
+				
+				var mb:MenuBar=event.target as MenuBar;
+				var selectedIndex:int=mb.selectedIndex;
+				
+				for (var i:int=0;i<mb.menuBarItems.length;i++){
+					if(i==selectedIndex){
+						(mb.menuBarItems[i] as MenuBarItem).setStyle("color", "0xff7009");
+					}
+					else{
+						(mb.menuBarItems[i] as MenuBarItem).setStyle("color", "0xffffff");
+					}
+				}
+				
+				if ((event.currentTarget != null) && (event.currentTarget.selectedIndex != null))
+				{
+					/*
+					this.nextSelectedIndex =event.currentTarget.selectedIndex;
+					trace("actual: "+Base.getinstance().selected_index + " - next: "+this.nextSelectedIndex);
+					if (Base.getinstance().selected_index == 3)
+					{
+						Alert.show("¿Desea salir de la edición de la versión? Si selecciona aceptar perderá todos los cambios.", "Alert", Alert.OK | Alert.CANCEL, this, alertListener );
+					}						
+					else if (Base.getinstance().selected_index == 8)
+					{
+						Alert.show("¿Desea salir de la edición de la versión? Si selecciona aceptar perderá todos los cambios.", "Alert", Alert.OK | Alert.CANCEL, this, alertListener );
+					}
+					else if (Base.getinstance().selected_index == 4)
+					{
+						Alert.show("¿Desea salir de la edición de la versión? Si selecciona aceptar perderá todos los cambios.", "Alert", Alert.OK | Alert.CANCEL, this, alertListener );
+					}
+					else if (Base.getinstance().selected_index == 5)
+					{
+						Alert.show("¿Desea salir de la edición de la versión? Si selecciona aceptar perderá todos los cambios.", "Alert", Alert.OK | Alert.CANCEL, this, alertListener );
+					}
+					else if (Base.getinstance().selected_index == 6)
+					{
+						Alert.show("¿Desea salir de la edición de la versión? Si selecciona aceptar perderá todos los cambios.", "Alert", Alert.OK | Alert.CANCEL, this, alertListener );
+					}
+					else
+					{
+						procesarCambioPantalla();
+					}
+					*/
+					
+					switch(String(event.currentTarget.selectedIndex))
+					{
+						case "0":
+							Base.getinstance().preShowVersionMenu();
+							break;
+						case "1":
+							Base.getinstance().preShowGeneralResourceLibrary();
+							break;
+						case "2":
+							Base.getinstance().preShowGeneralAreaEditor();
+							break;
+						case "4": break;
+						case "5": break;
+						case "6": break;
+						case "7": break;
+						case "8": break;
+						default: break;
+					}
+				}
+			}
+			
+			import com.innovae.oce.application.command.loginCommand;
+			import com.innovae.oce.application.event.loginEvent;
+			import com.innovae.oce.domain.datamodel.Base;
+			import com.innovae.services.orona.evolutio.type.T_authorization;
+			
+			import mx.controls.Alert;
+			
+			public function calllogin(username:String, password:String):void
+			{
+				//TODO
+				if(username != "" && password != "")
+				{
+					Base.getinstance().user = new T_authorization();
+					Base.getinstance().user.username = username;
+					Base.getinstance().user.password = password;
+					new loginEvent(loginEvent.LOGIN, username, password, "OCE").dispatch();
+				}
+				else
+				{
+					Alert.show(Base.getinstance().i18n_txt.getValue("incomplet_form_notification_text"),Base.getinstance().i18n_txt.getValue("incomplet_form_notification_title"), Alert.OK);
+				}
+				/*if (Base.getinstance().logged)
+				{
+					Base.getinstance().closeSession("sessin_closed");
+				}
+				else
+				{
+					if(username != "" && password != "")
+					{
+						Base.getinstance().user = new T_authorization();
+						Base.getinstance().user.username = username;
+						Base.getinstance().user.password = password;
+						new loginEvent(loginEvent.LOGIN, username, password, "OCE").dispatch();
+					}
+					else
+					{
+						Alert.show(Base.getinstance().i18n_txt.getValue("incomplet_form_notification_text"),Base.getinstance().i18n_txt.getValue("incomplet_form_notification_title"), Alert.OK);
+					}	
+				}*/
+			}
+			
+			private function closeSession():void
+			{
+				Base.getinstance().closeSession("sessin_closed");
+			}
+			
+			public function trim(str:String):String
+			{
+				return str.replace(/^\s*(.*?)\s*$/g, "$1");
+			}
+			
+			
+			
+			public function startProgressBarTimer():void
+			{
+				progressBarProgress = 0;
+				progressBarTimer = new Timer(100,100);
+				progressBarTimer.addEventListener(TimerEvent.TIMER, progressBarTimerHandler);
+				progressBarTimer.addEventListener(TimerEvent.TIMER_COMPLETE, progressBarTimerCompleteHandler);
+				progressBarTimer.start();
+			}
+			
+			public function stopProgressBarTimer():void
+			{
+				progressBarTimer.stop();
+				progressBarProgress = 0;
+				progressbar.setProgress(progressBarProgress,100);
+				progressBarTimer.removeEventListener(TimerEvent.TIMER, progressBarTimerHandler);
+				progressBarTimer.removeEventListener(TimerEvent.TIMER_COMPLETE, progressBarTimerCompleteHandler);
+			}
+			
+			private function progressBarTimerHandler(e:TimerEvent):void
+			{
+				progressBarProgress++;
+				progressbar.setProgress(progressBarProgress,100);
+			}
+			
+			private function progressBarTimerCompleteHandler(e:TimerEvent):void
+			{
+				progressBarProgress = 0;
+				progressbar.setProgress(progressBarProgress,100);
+				progressBarTimer.removeEventListener(TimerEvent.TIMER, progressBarTimerHandler);
+				progressBarTimer.removeEventListener(TimerEvent.TIMER_COMPLETE, progressBarTimerCompleteHandler);
+				startProgressBarTimer();
+			}
+			
+			protected function panel1_showHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				startProgressBarTimer();
+			}
+			
+			protected function panel1_hideHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				stopProgressBarTimer();
+			}
+			
+			private function handle_showPreviewEvent(e:BaseEvent):void
+			{
+				try{
+					previsualizador.update();
+				}catch(e:Error){
+				}
+
+			}
+
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<control:Controller />
+		<!--<business:Services id="servicios" />-->
+	</fx:Declarations>
+	<mx:Image x="0" y="0" source="assets/cabecera.png"/>
+	<s:Image y="0" height="120" scaleMode="stretch" source="assets/bg_cabecera.gif" right="0"/>
+	
+	<mx:VBox y="10" right="132">
+		<s:Label color="#EDFFBD" fontFamily="Verdana" fontSize="10" text="Nombre de usuario:"/>
+		<s:TextInput x="182" borderColor="#69DE5D"
+					 chromeColor="#D4FFBD" contentBackgroundAlpha="0.6" contentBackgroundColor="#EDFFBD"
+					 fontFamily="Verdana" fontSize="10" id="id_empresa" text="{Base.getinstance().user.username}" alpha="1.0" enabled="{!Base.getinstance().logged}" width="172"/>
+		<s:Label color="#EDFFBD" fontFamily="Verdana" fontSize="10" text="Contraseña:"/>
+		<s:TextInput id="pass_empresa" borderColor="#69DE5D"
+					 chromeColor="#D4FFBD" contentBackgroundAlpha="0.6" contentBackgroundColor="#EDFFBD"
+					 text="{Base.getinstance().user.password}" 
+					 fontFamily="Verdana" fontSize="10" alpha="1.0" displayAsPassword="true" enabled="{!Base.getinstance().logged}" width="172" textAlign="left" enter="calllogin(trim(id_empresa.text), trim(pass_empresa.text))"/>
+		<mx:Button x="604" label="Identificar" id="Identificar" 
+				   enabled="{ !Base.getinstance().logged }" 
+				   click="{calllogin(trim(id_empresa.text), trim(pass_empresa.text))}"
+				   width="172"
+				   chromeColor="#0B7600"
+				   color="#EDFFBD" 
+				   focusColor="#72FF00" 
+				   fontFamily="Verdana" 
+				   fontSize="10"/>
+	</mx:VBox>
+	
+	<mx:LinkButton y="67" label="CERRAR SESIÓN" textDecoration="underline" color="#F5F6FA" click="{closeSession();}" enabled="{Base.getinstance().logged}" visible="{Base.getinstance().logged}" right="1"/>
+		
+	<s:VGroup y="120" width="100%" height="100%">
+		<!--<local:header width="932"/>-->
+		<mx:MenuBar width="100%" 
+					labelField="@label"
+					dataProvider="{menuBarCollection}"
+					click="menuClickHandler(event)"
+					itemClick="menuItemClickHandler(event)"
+					visible="{Base.getinstance().logged}"
+					/>
+		<!-- selectedIndex="{Base.getinstance().selected_index}" -->
+		<mx:ViewStack id="mainViews" visible="{Base.getinstance().logged}" x="0" y="0" width="890"
+					  height="100%" selectedIndex="{Base.getinstance().selected_index}"
+					  >
+			<s:NavigatorContent width="100%" height="100%" label="listado_versiones">
+				<view:versionMenu />
+			</s:NavigatorContent>
+			<s:NavigatorContent width="100%" height="100%" label="gestion_recursos_generica">
+				<view:resourcesLibrary />
+			</s:NavigatorContent>
+			<s:NavigatorContent width="100%" height="100%" label="gestion_edicion_contenidos">
+				<view:GeneralContentEditionManager />
+			</s:NavigatorContent>
+			<s:NavigatorContent width="100%" height="100%" label="edicion_version">
+				<view:versionEdition />
+			</s:NavigatorContent>
+			<s:NavigatorContent width="100%" height="100%" label="edicion_area_version">
+				<view:AreaContentEdition1 />
+			</s:NavigatorContent>
+			<s:NavigatorContent width="100%" height="100%" label="edicion_area_version">
+				<view:AreaContentEdition3 />
+			</s:NavigatorContent>
+			<s:NavigatorContent width="100%" height="100%" label="edicion_area_version">
+				<view:AreaContentEdition4 />
+			</s:NavigatorContent>
+			<s:NavigatorContent width="100%" height="100%" label="version_preview">
+				<view:versionPreview id="previsualizador"/>
+			</s:NavigatorContent>
+			<s:NavigatorContent width="100%" height="100%" label="isla_edition">
+				<view:IslaEdition/>
+			</s:NavigatorContent>
+			<s:NavigatorContent width="100%" height="100%" label="isla_preview">
+				<view:islaPreview/>
+			</s:NavigatorContent>
+		</mx:ViewStack>
+		
+	</s:VGroup>
+<mx:Image id="version_help" y="1075" width="23" height="23" source="assets/info.png"
+		  toolTip="{Base.getinstance().version}"/>
+	<mx:Canvas id="mainHiderCanvas" visible="{Base.getinstance().sendingResource}" y="120" width="100%"
+			   height="100%" backgroundAlpha="0.6" backgroundColor="#FFFFFF"
+			   borderAlpha="0.0" borderVisible="false" contentBackgroundColor="#FFFFFF"
+			   show="panel1_showHandler(event)"
+			   hide="panel1_hideHandler(event)">
+		<s:Panel x="398" y="160" width="347" height="158" 
+				 title="{Base.getinstance().i18n_txt.getValue('sending_resource_title')}" 
+				>
+			<s:Label x="9" y="10" width="326" height="83" text="{Base.getinstance().i18n_txt.getValue('sending_resource_text')}"/>
+			<mx:ProgressBar id="progressbar" x="10" y="98" width="325" height="14" label=""
+							chromeColor="#FFFFFF" color="#79FB4C" mode="manual" trackHeight="20"/>
+		</s:Panel>
+		
+		
+	</mx:Canvas>
+</s:Application>

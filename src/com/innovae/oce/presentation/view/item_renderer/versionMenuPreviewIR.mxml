@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:MXDataGridItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
+						  xmlns:s="library://ns.adobe.com/flex/spark"
+						  xmlns:mx="library://ns.adobe.com/flex/mx"
+						  width="100%" focusEnabled="true">
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.oce.domain.datamodel.Base;
+			protected function versionMenuModifyItemRendererClick(event:MouseEvent):void
+			{
+				//trace(data.id);
+				Base.getinstance().versionOp(Base.getinstance().version_op_new_from, data.id);
+			}
+		]]>
+	</fx:Script>
+	<s:HGroup horizontalAlign="center" verticalAlign="middle">
+		<s:Image source="@Embed('assets/play.png')" click="versionMenuModifyItemRendererClick(event)"/>	
+	</s:HGroup>
+</s:MXDataGridItemRenderer>

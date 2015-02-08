@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark" 
+				xmlns:mx="library://ns.adobe.com/flex/mx" 
+				autoDrawBackground="true"
+				creationComplete="itemrenderer2_creationCompleteHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.services.orona.evolutio.type.T_floor;
+			import com.innovae.oce.domain.datamodel.Base;
+			
+			import mx.events.FlexEvent;
+			
+			protected function itemrenderer2_creationCompleteHandler(event:FlexEvent):void
+			{
+				trace("................."+T_floor(data).name+"..................");
+			}
+			
+			protected function label1_clickHandler(event:MouseEvent):void
+			{
+				Base.getinstance().versionEdition_isEditSentido = false;
+				Base.getinstance().versionEdition_selectedUp_Stop_Down = Base.getinstance().sentido_null;
+				Base.getinstance().versionEdition_selectedFloor = T_floor(data);
+				Base.getinstance().versionEdition_getSelectedFloorOfDirectory();
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:Label width="100%" height="20" text="{T_floor(data).name}" textAlign="center"
+			 verticalAlign="middle"
+			 click="label1_clickHandler(event)" />
+	
+</s:ItemRenderer>

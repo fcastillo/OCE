@@ -1,0 +1,9 @@
+﻿package com.innovae.oce.domain.datamodel
+{
+	public interface oceEditorProviderInterface 
+	{
+		function getResourceURL(resource_type:int = 0):Object;
+		function saveContent(contentXML:String = "", resources:Array = null):void;
+	}
+	
+}

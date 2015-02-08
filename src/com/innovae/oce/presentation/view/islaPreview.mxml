@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		  xmlns:s="library://ns.adobe.com/flex/spark"
+		  xmlns:mx="library://ns.adobe.com/flex/mx"
+		  activate="areacontentedition_activateHandler(event)"
+		  show="areacontentedition_showHandler(event)"
+		  currentStateChange="areacontenedition_currentStateChangeHandler(event)"
+		  enterState="areacontentedition_enterStateHandler(event)"
+		  updateComplete="areacontentedition_updateCompleteHandler(event)"
+		  
+		  >
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.oce.domain.datamodel.Base;
+			
+			import flash.sampler.getInvocationCount;
+			
+			import mx.events.CloseEvent;
+			import mx.events.StateChangeEvent;
+			
+			// [Bindable][Embed(source="assets/OCP_v0.5.swf")] private var ocp_swf:Class;
+			
+			protected function areacontentedition_activateHandler(event:Event):void
+			{
+				//swfReady();
+			}
+			
+			protected function areacontentedition_showHandler(event:FlexEvent):void
+			{
+				trace("show_preview_vdap*****************************************************************************************************");
+				flashcontent.load("assets/OCP_isla_v0.5.swf");
+			}
+			
+			protected function areacontentedition_hideHandler(event:FlexEvent):void
+			{
+				trace("hide_preview_vdap*****************************************************************************************************");
+				flashcontent.unloadAndStop();
+				
+			}
+			
+			private function onScroll(event:*):void 
+			{
+				event.preventDefault();
+				event.stopImmediatePropagation();
+			}
+			
+			protected function areacontenedition_currentStateChangeHandler(event:StateChangeEvent):void
+			{
+				log_preview.text += "\nstatechange**********************************************************************************************";
+				trace("statechange**********************************************************************************************");
+			}
+			
+			protected function areacontentedition_enterStateHandler(event:FlexEvent):void
+			{
+				log_preview.text += "\nenterstate**********************************************************************************************";
+				trace("enterstate**********************************************************************************************");
+			}
+			
+			protected function areacontentedition_updateCompleteHandler(event:FlexEvent):void
+			{
+				log_preview.text += "\nupdateCompleteHandler***********************************************************************************";
+				trace("updateCompleteHandler***********************************************************************************");
+				//if (flashApp == null) { swfReady(); }
+				//else { loadAreaContentXML(); }
+			}
+			
+			protected function resourceSelectionWindow_closeHandler(event:CloseEvent):void
+			{
+				// TODO Auto-generated method stub
+				Base.getinstance().resourcesList_selectedResource  = new T_resource();
+				Base.getinstance().resourcesList_selectedResource.url = null;
+				flashApp.setSelectedResource(Base.getinstance().resourcesList_selectedResource);
+				Base.getinstance().versionEdition_selectedArea_resource_selection_windows_visible = false;
+			}
+			
+			import com.innovae.oce.application.event.getVersionXMLEvent;
+			import com.innovae.services.orona.evolutio.type.T_resource;
+			import com.innovae.oce.domain.datamodel.Base;
+			import com.innovae.oce.domain.datamodel.oceEditorInterface;
+			
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.events.FlexEvent;
+			import mx.managers.SystemManager;
+			
+			[Bindable] private var flashApp:Object;
+			[Bindable] private var keyDown:uint;
+
+			private function swfReady():void 
+			{
+				//flashApp = e.target.content as oceEditorInterface;
+				var context:LoaderContext = new LoaderContext();
+				context.securityDomain = SecurityDomain.currentDomain;
+				context.applicationDomain = new ApplicationDomain();
+				
+				flashApp = 	flashcontent.content;
+				flashApp.setResourceLibrary(Base.getinstance());
+				flashcontent.addEventListener(FlexEvent.SHOW, onScroll);
+				flashApp.addEventListener(FlexEvent.SHOW, onScroll);
+				loadAreaContentXML();
+			}
+
+			public function loadXML():void
+			{
+				var devuelto_flash:String = String(flashApp.loadXML('<xml></xml>'));
+				log_preview.text += "\nDevuelto Flash -> "+devuelto_flash;
+				trace("Devuelto Flash -> "+devuelto_flash);
+				//flashApp.setResourceLibrary(Base.getinstance());
+			}
+			
+	
+			protected function flashcontent_ioErrorHandler(event:IOErrorEvent):void
+			{
+				log_preview.text += "\n[flashcontent_ioErrorHandler]";
+				trace("[flashcontent_ioErrorHandler]");
+			}
+			
+			protected function flashcontent_securityErrorHandler(event:SecurityErrorEvent):void
+			{
+				log_preview.text += "\n[flashcontent_securityErrorHandler]";
+				trace("[flashcontent_securityErrorHandler]");
+			}
+			
+			protected function flashcontent_keyDownHandler(event:KeyboardEvent):void
+			{
+				if (keyDown != event.keyCode)
+				{
+					keyDown = event.keyCode;
+					log_preview.text += "\nflashcontent_keyDownHandler["+event.keyCode+"]";
+					trace("flashcontent_keyDownHandler["+event.keyCode+"]");
+					//flashApp.raiseExternalKeyboardEvent(event);
+					flashApp.keyDownHandler(event);
+				}
+			}
+			
+			protected function flashcontent_keyUpHandler(event:KeyboardEvent):void
+			{
+				// TODO Auto-generated method stub
+				keyDown = new uint();
+				log_preview.text += "\nflashcontent_keyUpHandler["+event.keyCode+"]";
+				trace("flashcontent_keyUpHandler["+event.keyCode+"]");
+				//flashApp.raiseExternalKeyboardEvent(event);
+				flashApp.keyUpHandler(event);
+			}
+			
+			
+			//protected function loadAreaContentXML(event:FlexEvent):void
+			protected function loadAreaContentXML():void
+			{
+				// TODO Auto-generated method stub
+				log_preview.text += "\nloadAreaContentXML";
+				trace("loadAreaContentXML");
+				flashApp.setResourceLibrary(Base.getinstance());
+				
+				log_preview.text += "\nloadAreaContentXML ["+Base.getinstance().previewVersionXML+"] -> new from existing";
+				trace("loadAreaContentXML ["+Base.getinstance().previewVersionXML+"] -> new from existing");
+				//trace("loadAreaContentXML ["+kk2+"] -> new from existing");
+				try
+				{
+					var devuelto_flash:String =String(flashApp.loadXML(Base.getinstance().previewVersionXML)); 				
+					log_preview.text += "\n"+devuelto_flash;
+					trace("Devuelto Flash -> "+devuelto_flash);
+					//trace("Devuelto Flash -> "+String(flashApp.loadXML(kk2)));
+				}
+				catch (error:Error)	{ trace(error.message); }
+				
+			}
+		]]>
+	</fx:Script>
+	
+	<s:SWFLoader id="flashcontent" x="10" y="10" autoLoad="true" source="assets/OCP_isla_v0.5.swf"
+				 doubleClickEnabled="true"
+				 loadForCompatibility="true"
+				 complete="swfReady()" 
+				 visible="{Base.getinstance().isla_content_preview}"
+				 ioError="flashcontent_ioErrorHandler(event)" 
+				 securityError="flashcontent_securityErrorHandler(event)"
+				 show="areacontentedition_showHandler(event)"
+				 hide="areacontentedition_hideHandler(event)"
+				 />
+	<s:Spacer />
+	<s:TextArea id="log_preview" x="19" y="513" width="1061" height="245" borderColor="#FF0000" visible="false" />
+	
+</s:Group>

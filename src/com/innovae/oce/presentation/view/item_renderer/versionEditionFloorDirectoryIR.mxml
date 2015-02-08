@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:MXDataGridItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+						  xmlns:s="library://ns.adobe.com/flex/spark" 
+						  xmlns:mx="library://ns.adobe.com/flex/mx" 
+						  focusEnabled="true"
+						  creationComplete="mxdatagriditemrenderer1_creationCompleteHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.oce.domain.datamodel.Base;
+			import mx.events.FlexEvent;
+		
+			protected function mxdatagriditemrenderer1_creationCompleteHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				trace(data.name);
+			}
+			
+		]]>
+	</fx:Script>
+	<s:HGroup horizontalAlign="center" verticalAlign="middle">
+		<s:Label text="{data.name}" />
+	</s:HGroup>
+</s:MXDataGridItemRenderer>

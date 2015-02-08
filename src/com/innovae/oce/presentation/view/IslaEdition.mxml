@@ -1,0 +1,775 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		  xmlns:s="library://ns.adobe.com/flex/spark"
+		  xmlns:mx="library://ns.adobe.com/flex/mx"
+		  activate="areacontentedition_activateHandler(event)"
+		  show="areacontentedition_showHandler(event)"
+		  currentStateChange="areacontenedition_currentStateChangeHandler(event)"
+		  enterState="areacontentedition_enterStateHandler(event)"
+		  updateComplete="areacontentedition_updateCompleteHandler(event)"
+		  
+		  >
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.oce.domain.datamodel.Base;
+			import com.innovae.services.orona.evolutio.type.T_area;
+			import com.innovae.services.orona.evolutio.type.T_area_type;
+			
+			import flash.sampler.getInvocationCount;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.CloseEvent;
+			import mx.events.StateChangeEvent;
+			
+			import org.osmf.events.MediaPlayerStateChangeEvent;
+			
+			protected function save_isla_version(event:MouseEvent):void
+			{
+				Base.getinstance().versionEdition_selectedAreaContent.name = contentAreaEditionName.text;
+				Base.getinstance().versionEdition_selectedAreaContent.description = contentAreaEditionDescription.text;
+				Base.getinstance().detailedVersion.version.name = contentAreaEditionName.text;
+				Base.getinstance().detailedVersion.directory_style = null;
+				Base.getinstance().detailedVersion.show_floor_info = false;
+				Base.getinstance().detailedVersion.version_style = null;
+				Base.getinstance().detailedVersion.floordirectory = new ArrayCollection();
+				Base.getinstance().detailedVersion.up_areas = new ArrayCollection();
+				Base.getinstance().detailedVersion.down_areas = new ArrayCollection();
+				Base.getinstance().detailedVersion.isla_areas = new ArrayCollection();
+				var area:T_area = new T_area();
+				area.id = 0;
+				area = Base.getinstance().versionEdition_selectedAreaContent;
+				area.type = new T_area_type();
+				area.type.id = 5;
+				area.name = contentAreaEditionName.text;
+				area.description = contentAreaEditionDescription.text;
+				Base.getinstance().detailedVersion.isla_areas.addItem(area);
+				/*
+				Base.getinstance().detailedVersion.isla_area.id = -1;
+				Base.getinstance().detailedVersion.isla_area = Base.getinstance().versionEdition_selectedAreaContent;
+				Base.getinstance().detailedVersion.isla_area.type = new T_area_type();
+				Base.getinstance().detailedVersion.isla_area.type.id = 5;
+				*/
+				Base.getinstance().detailedVersion.version.description = contentAreaEditionDescription.text;
+				Base.getinstance().saveDetailedVersion();
+			}
+			
+			protected function areacontentedition_activateHandler(event:Event):void
+			{
+				//swfReady();
+			}
+			
+			protected function areacontentedition_showHandler(event:FlexEvent):void
+			{
+				trace("show*****************************************************************************************************");
+				flashcontent.load("assets/OCE_isla_v0.11.swf");
+			}
+			
+			protected function areacontentedition_hideHandler(event:FlexEvent):void
+			{
+				flashcontent.unloadAndStop();
+			}
+			
+			private function onScroll(event:*):void 
+			{
+				event.preventDefault();
+				event.stopImmediatePropagation();
+			}
+			
+			protected function areacontenedition_currentStateChangeHandler(event:StateChangeEvent):void
+			{
+				trace("statechange**********************************************************************************************");
+			}
+			
+			protected function areacontentedition_enterStateHandler(event:FlexEvent):void
+			{
+				trace("enterstate**********************************************************************************************");
+			}
+			
+			protected function areacontentedition_updateCompleteHandler(event:FlexEvent):void
+			{
+				trace("updateCompleteHandler***********************************************************************************");
+			}
+			
+			protected function resourceSelectionWindow_closeHandler(event:CloseEvent):void
+			{
+				Base.getinstance().resourcesList_selectedResource  = new T_resource();
+				Base.getinstance().resourcesList_selectedResource.url = null;
+				flashApp.setSelectedResource(Base.getinstance().resourcesList_selectedResource);
+				Base.getinstance().versionEdition_selectedArea_resource_selection_windows_visible = false;
+			}
+			
+			protected function swfResourceResize(event:Event):void
+			{
+				// TODO Auto-generated method stub
+				if (event.currentTarget != null )
+				{
+					resource_video.width = 0;
+					resource_video.height = 0;
+					Base.getinstance().resourcesList_selectedResource_dimension = event.currentTarget.contentWidth + "x" + event.currentTarget.contentHeight;
+					if (int(event.currentTarget.width) > 300)  
+					{ 
+						resource_picture.width = 300; 
+						//resource_picture.content.width = 300;
+					}
+					if (int(event.currentTarget.contentHeight) > 300) 
+					{ 
+						resource_picture.height = 300;
+						//resource_picture.content.height = 300;
+					}
+				}
+				else
+				{
+					resource_picture.width = 300; 
+					//resource_picture.content.width = 300;
+					resource_picture.height = 300; 
+					//resource_picture.content.height = 300;
+				}
+				Base.getinstance().resourcesList_selectedResource_size = (event.currentTarget.bytesTotal / 1024) + " KB";
+				
+			}
+			
+			
+			
+			protected function resource_video_mediaPlayerStateChangeHandler(event:MediaPlayerStateChangeEvent):void
+			{
+				// TODO Auto-generated method stub
+				trace(event.state);
+				resource_picture.width = 0;
+				resource_picture.height = 0;
+				//resource_picture.content.width = 0;
+				//resource_picture.content.height = 0;
+				resource_video.width = 300; 
+				resource_video.height = 300; 
+				//resource_video.videoObject.height = 300;
+				//resource_video.videoObject.width = 300;
+				/*				
+				if (event.state == "playing")
+				{
+					if (event.currentTarget != null )
+					{
+						resource_picture.width = 0;
+						resource_picture.height = 0;
+						resource_picture.content.width = 0;
+						resource_picture.content.height = 0;
+						Base.getinstance().resourcesList_selectedResource_dimension = event.currentTarget.width + "x" + event.currentTarget.height;
+						if (int(event.currentTarget.width) > 300)  
+						{ 
+							resource_video.width = 300;
+							resource_video.videoObject.width = 300;
+							
+						}
+						if (int(event.currentTarget.height) > 300) 
+						{ 
+							resource_video.height = 300;
+							resource_video.videoObject.height = 300;
+							
+						}
+					}
+					else
+					{
+						resource_video.width = 300; 
+						resource_video.height = 300; 
+						resource_video.videoObject.height = 300;
+						resource_video.videoObject.width = 300;
+					}
+					Base.getinstance().resourcesList_selectedResource_size = (event.currentTarget.bytesTotal / 1024) + " KB";
+				}
+				*/
+					
+			}
+			
+			protected function modifyResourcePreviewDependingOnResourceType(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				if (Base.getinstance().versionedition_selectedAreaContentType == Base.getinstance().area1_type)
+				{
+					trace("resource_type.id: "+Base.getinstance().resourcesList_resource_type.id);
+					/*
+					if (Base.getinstance().resourcesList_resource_type.id == Base.getinstance().picture_resource_id)
+					{
+						resource_picture.visible = true;
+						resource_picture.width = 300; 
+						resource_picture.height = 300; 
+						resource_video.visible = false;	
+						resource_video.width = 0; 
+						resource_video.height = 0;
+					}
+					else if (Base.getinstance().resourcesList_resource_type.id == Base.getinstance().swf_resource_id)
+					{
+						resource_picture.visible = true;
+						resource_picture.width = 300; 
+						resource_picture.height = 300; 
+						resource_video.visible = false;	
+						resource_video.width = 0; 
+						resource_video.height = 0;
+					}
+					else if (Base.getinstance().resourcesList_resource_type.id == Base.getinstance().video_resource_id)
+					{
+						resource_picture.visible = false;
+						resource_picture.width = 0; 
+						resource_picture.height = 0; 
+						resource_video.visible = true;
+						resource_video.width = 300; 
+						resource_video.height = 300; 
+					}
+					*/
+					resize_contenedores();
+				}
+			}
+			
+			protected function resource_list_click(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+
+				stopSounds();
+				Base.getinstance().resourcesList_selectedResource = resourceList.selectedItem;
+				trace("seleccionado: "+Base.getinstance().resourcesList_selectedResource.name+" ["+Base.getinstance().resourcesList_selectedResource.url+"]");
+				resize_contenedores();
+				reasignar_fuentes();
+			}
+			
+			private function reasignar_fuentes():void
+			{
+				switch(Base.getinstance().resourcesList_resource_type.id)
+				{
+					case Base.getinstance().picture_resource_id:
+						trace("reasignar_fuentes[picture]");
+						resource_picture.source = Base.getinstance().resourcesList_selectedResource.url;
+						resource_video.source = null;
+						resource_swf.unloadAndStop();
+						resource_swf.source = null;
+						break;
+					case Base.getinstance().video_resource_id:
+						trace("reasignar_fuentes[video]");
+						resource_picture.source = null;
+						resource_video.source = Base.getinstance().resourcesList_selectedResource.url;
+						resource_video.autoPlay = true;
+						resource_swf.unloadAndStop();
+						resource_swf.source = null;
+						break;
+					case Base.getinstance().swf_resource_id:
+						trace("reasignar_fuentes[swf]");
+						visible_swf 	= true;
+						resource_picture.source = null;
+						resource_video.source = null;
+						resource_swf.unloadAndStop();
+						/*
+						resource_swf = new SWFLoader();
+						resource_swf.visible = visible_swf;
+						resource_swf.doubleClickEnabled=false;
+						resource_swf.loadForCompatibility=true; 
+						resource_swf.scaleContent=true;
+						resource_swf.addEventListener(IOErrorEvent.IO_ERROR,swf_resource_ioErrorHandler);
+						resource_swf.addEventListener(SecurityErrorEvent.SECURITY_ERROR,swf_resource_securityErrorHandler);
+						resource_swf.addEventListener(ProgressEvent.PROGRESS, resource_swf_progressHandler);
+						resource_swf.autoLoad = true;*/
+						if (Base.getinstance().resourcesList_selectedResource.url != null)
+						{
+							//resource_swf.source = Base.getinstance().resourcesList_selectedResource.url;
+							var loader:URLLoader=new URLLoader();
+							
+							// binary format since it a SWF
+							loader.dataFormat=URLLoaderDataFormat.BINARY;
+							loader.addEventListener(Event.COMPLETE, onSWFLoaded);
+							
+							//load the file
+							loader.load(new URLRequest(Base.getinstance().resourcesList_selectedResource.url));
+						}
+						
+						resource_swf.width=300;
+						resource_swf.height=300;
+						resource_swf_worig = -1;
+						resource_swf_horig = -1;
+						resource_swf_load_complete =false;
+						//resource_swf.load(Base.getinstance().resourcesList_selectedResource.url);
+						break;
+				}
+				resize_contenedores();
+			}
+			
+			
+			private function stopSounds():void
+			{
+				//trace("***stopSounds()***********************************");
+				resource_swf.unloadAndStop();
+				resource_swf.load(null);
+				flash.media.SoundMixer.stopAll();
+				resource_swf.unloadAndStop();
+			}
+			
+			private function onSWFLoaded(e:Event):void {
+				// remove the event
+				var loader:URLLoader=URLLoader(e.target);
+				loader.removeEventListener(Event.COMPLETE, onSWFLoaded);
+				
+				// add an Application context and allow bytecode execution 
+				var context:LoaderContext=new LoaderContext();
+				//context.allowLoadBytesCodeExecution=true;
+				
+				// set the new context on SWFLoader
+				resource_swf.loaderContext = context;
+				
+				resource_swf.addEventListener(Event.COMPLETE, loadComplete);
+				
+				// load the data from the bytearray
+				resource_swf.load(loader.data);
+			}
+			// your load complete function
+			private function loadComplete(completeEvent:Event):void {
+				resize_contenedores();
+			}
+
+			
+		]]>
+	</fx:Script>
+	<!-- show="loadAreaContentXML(event)" -->
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.services.orona.evolutio.type.T_resource;
+			import com.innovae.oce.domain.datamodel.Base;
+			import com.innovae.oce.domain.datamodel.oceEditorInterface;
+			
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.events.FlexEvent;
+			import mx.managers.SystemManager;
+			
+			[Bindable] private var flashApp:Object;
+			[Bindable] private var keyDown:uint;
+
+			private function swfReady():void 
+			{
+				//flashApp = e.target.content as oceEditorInterface;
+				resourceSelectionWindow.visible = false;
+				var context:LoaderContext = new LoaderContext();
+				context.securityDomain = SecurityDomain.currentDomain;
+				context.applicationDomain = new ApplicationDomain();
+				
+				flashApp = 	flashcontent.content;
+				flashApp.setResourceLibrary(Base.getinstance());
+				flashcontent.addEventListener(FlexEvent.SHOW, onScroll);
+				flashApp.addEventListener(FlexEvent.SHOW, onScroll);
+				loadAreaContentXML();
+			}
+
+			public function loadXML():void
+			{
+				trace("Devuelto Flash -> "+String(flashApp.loadXML("<dpe><loadXML["+Math.random()+"] /></dpe>")));
+				//flashApp.setResourceLibrary(Base.getinstance());
+			}
+			
+	
+			protected function flashcontent_ioErrorHandler(event:IOErrorEvent):void
+			{
+				trace("[flashcontent_ioErrorHandler]");
+			}
+			
+			protected function flashcontent_securityErrorHandler(event:SecurityErrorEvent):void
+			{
+				trace("[flashcontent_securityErrorHandler]");
+			}
+			
+			protected function flashcontent_keyDownHandler(event:KeyboardEvent):void
+			{
+				if (keyDown != event.keyCode)
+				{
+					keyDown = event.keyCode;
+					trace("flashcontent_keyDownHandler["+event.keyCode+"]");
+					//flashApp.raiseExternalKeyboardEvent(event);
+					flashApp.keyDownHandler(event);
+				}
+			}
+			
+			protected function flashcontent_keyUpHandler(event:KeyboardEvent):void
+			{
+				// TODO Auto-generated method stub
+				keyDown = new uint();
+				trace("flashcontent_keyUpHandler["+event.keyCode+"]");
+				//flashApp.raiseExternalKeyboardEvent(event);
+				flashApp.keyUpHandler(event);
+			}
+			
+			
+			//protected function loadAreaContentXML(event:FlexEvent):void
+			protected function loadAreaContentXML():void
+			{
+				// TODO Auto-generated method stub
+				trace("loadAreaContentXML -> op ["+Base.getinstance().versionEdition_selectedAreaContent_Op+"]");
+				flashApp.setResourceLibrary(Base.getinstance());
+				switch (Base.getinstance().versionEdition_selectedAreaContent_Op)
+				{
+					case Base.getinstance().version_op_new_isla:
+						trace("loadAreaContentXML ["+Base.getinstance().version_op_new_isla+"] -> new isla"); 
+						try
+						{
+							trace("loadAreaContentXML ["+Base.getinstance().version_op_new_isla+"] -> xml ("+Base.getinstance().versionEdition_selectedAreaContent.xml+")");
+							//trace("Devuelto Flash -> "+String(flashApp.loadXML('<Presentacion alto_salida="800" ancho_salida="600" alto_original="800" ancho_original="600"></Presentacion>')));
+							var devuelto_flash:String = String(flashApp.loadXML('<Presentacion alto_salida="800" ancho_salida="600" alto_original="800" ancho_original="600"></Presentacion>'));
+							trace("Devuelto Flash -> "+devuelto_flash);
+						}
+						catch (error:Error)	{ trace(error.message); }
+						break;
+					case Base.getinstance().version_op_new_isla_from:
+						trace("loadAreaContentXML ["+Base.getinstance().version_op_new_isla_from+"] -> new from existing");
+						try
+						{
+							trace("loadAreaContentXML ["+Base.getinstance().versionEdition+"] -> xml ("+Base.getinstance().versionEdition_selectedAreaContent.xml+")");
+							//trace("Devuelto Flash -> "+String(flashApp.loadXML(Base.getinstance().versionEdition_selectedAreaContent.xml)));
+							var devuelto_flash3:String = String(flashApp.loadXML(Base.getinstance().versionEdition_selectedAreaContent.xml));
+							trace("Devuelto Flash -> "+devuelto_flash3);
+						}
+						catch (error:Error)	{ trace(error.message); }
+						break;
+					case Base.getinstance().version_op_modify_isla:
+						trace("loadAreaContentXML ["+Base.getinstance().versionEdition_selectedAreaContent_Op+"] -> modify");
+						try
+						{
+							trace("loadAreaContentXML ["+Base.getinstance().versionEdition+"] -> xml ("+Base.getinstance().versionEdition_selectedAreaContent.xml+")");
+							var devuelto_flash4:String = String(flashApp.loadXML(Base.getinstance().versionEdition_selectedAreaContent.xml));
+							trace("Devuelto Flash -> "+devuelto_flash4);
+						}
+						catch (error:Error) { trace(error.message); }
+						break;
+				}
+				
+			}
+			
+			protected function volver_clickHandler(event:MouseEvent):void
+			{
+				Base.getinstance().preShowVersionMenu();
+			}
+			
+			/**********************************************************************/
+			/*****	SUBIDA DE RECURSOS ********************************************/
+			/**********************************************************************/
+			
+			import com.innovae.oce.application.event.uploadResourcesEvent;
+			import com.innovae.services.orona.evolutio.type.T_resource_type;
+			import com.innovae.oce.domain.datamodel.Base;
+			
+			import mx.events.FlexEvent;
+			
+			private var fileReferenceList:FileReferenceList;
+			private var fileReference:FileReference;
+			private var resource_type:T_resource_type;
+			
+			protected function uploadPictureResource(event:MouseEvent):void
+			{
+				resource_type = new T_resource_type();
+				resource_type.id = Base.getinstance().picture_resource_id;
+				resource_type.type_name = "picture";
+				fileReferenceList = new FileReferenceList();
+				fileReferenceList.addEventListener(Event.SELECT, resourceSelected);
+				fileReferenceList.browse(new Array(getImageTypeFilter()));				
+			}
+			
+			private function getImageTypeFilter():FileFilter {
+				return new FileFilter("Images (*.jpg, *.jpeg, *.gif, *.png)", "*.jpg;*.jpeg;*.gif;*.png");
+			}
+			
+			private function resourceSelected(event:Event):void {
+				flash.media.SoundMixer.stopAll();
+				var fileReferenceList:FileReferenceList = FileReferenceList(event.target);
+				var fileList:Array = fileReferenceList.fileList;
+				
+				// get the first file that the user chose
+				fileReference = FileReference(fileList[0]);
+				fileReference.addEventListener(Event.COMPLETE, resourceLoadComplete);
+				fileReference.load();
+			}
+			public function resourceLoadComplete(evt:Event):void
+			{
+				fileReference.removeEventListener(Event.COMPLETE, resourceLoadComplete); 
+				new uploadResourcesEvent(uploadResourcesEvent.UPLOAD_RESOURCE, Base.getinstance().user, fileReference.data, fileReference.name, resource_type).dispatch();
+				// upload the file to the server side script
+				// fileReference.addEventListener(Event.COMPLETE, pictureUploadCompleteHandler);
+				// fileReference.addEventListener(ProgressEvent.PROGRESS, pictureUploadCompleteHandler);
+				// fileReference.upload(urlRequest);
+				
+				//statusText.text = "Uploading...";
+			}
+			protected function group1_creationCompleteHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				Base.getinstance().getResources(Base.getinstance().picture_resource_id);
+			}
+			
+			protected function sendResourceToEditor():void
+			{
+				//var resource:T_resource = editor_resources_list.selectedItem as T_resource;
+				/*var resource:T_resource = new T_resource();
+				switch (Base.getinstance().oceEditor_requested_resource_type)
+				{
+					case Base.getinstance().picture_resource_id:
+						var imagen:String = "http://localhost/prueba"+int(Math.random()*4)+".png";
+						resource.url = imagen;
+						break;
+					case Base.getinstance().video_resource_id:
+						resource.url = "http://localhost/video.flv";
+						break;
+				}
+				Base.getinstance().oceEditor_requested_resource_type = 0;
+				*/
+				flash.media.SoundMixer.stopAll();
+				flashApp.setSelectedResource(Base.getinstance().resourcesList_selectedResource);
+				Base.getinstance().versionEdition_selectedArea_resource_selection_windows_visible = false;
+				Base.getinstance().resourcesList_selectedResource = new T_resource();
+			}
+			
+			
+			
+			/////////////////////////////////////////////////////////////////////////
+			protected function imageResourceResize(event:Event):void
+			{
+				if (event.currentTarget.bitmapData != null )
+				{
+					Base.getinstance().resourcesList_selectedResource_dimension = event.currentTarget.bitmapData.width + "x" + event.currentTarget.bitmapData.height;
+					if (int(event.currentTarget.bitmapData.width) > 300)  
+					{ 
+						resource_picture.width = 300; 
+					}
+					if (int(event.currentTarget.bitmapData.height) > 300) 
+					{ 
+						resource_picture.height = 300; 
+					}
+				}
+				else
+				{
+					resource_picture.width = 300; 
+					resource_picture.height = 300; 
+				}
+				Base.getinstance().resourcesList_selectedResource_size = (event.currentTarget.bytesTotal / 1024) + " KB";
+			}
+			
+			
+			[Bindable] private var visible_picture:Boolean = true;
+			[Bindable] private var visible_video:Boolean = false;
+			[Bindable] private var visible_swf:Boolean = false;
+			[Bindable] private var resource_swf_load_complete:Boolean = false;
+			[Bindable] private var resource_swf_worig:Number = -1;
+			[Bindable] private var resource_swf_horig:Number = -1;
+			private function resize_contenedores():void
+			{
+				switch(Base.getinstance().resourcesList_resource_type.id)
+				{
+					case Base.getinstance().picture_resource_id:
+						trace("resize_contenedores[picture]");
+						visible_picture = true;
+						visible_video 	= false;
+						visible_swf 	= false;
+						resource_video.source = null;
+						resource_swf.source = null;
+						resource_picture.width = 300;resource_picture.height = 300;
+						resource_video.width = 0; resource_video.height = 0;
+						resource_swf.width = 0; resource_swf.height = 0;
+						break;
+					case Base.getinstance().video_resource_id:
+						trace("resize_contenedores[video]");
+						visible_picture = false;
+						visible_video 	= true;
+						visible_swf 	= false;
+						resource_picture.source = null;
+						resource_swf.source = null;
+						resource_picture.width = 0;resource_picture.height = 0;
+						resource_video.width = 300; resource_video.height = 300;
+						resource_swf.width = 0; resource_swf.height = 0;
+						break;
+					case Base.getinstance().swf_resource_id:
+						visible_picture = false;
+						visible_video 	= false;
+						visible_swf 	= true;
+						resource_picture.source = null;
+						resource_video.source = null;
+						resource_picture.width = 0;resource_picture.height = 0;
+						resource_video.width = 0; resource_video.height = 0;
+						/*
+						if (resource_swf.height>300) {resource_swf.height = 300;}
+						if (resource_swf.width>300) {resource_swf.width = 300;}
+						*/
+						if (resource_swf.content != null) {
+							trace(resource_swf.width+"x"+resource_swf.height+" - "+resource_swf.content.width+"x"+resource_swf.content.height);
+							/*
+							if (resource_swf.content.height>300) 
+							{
+							resource_swf.content.width = ( resource_swf.content.width * 300 ) / resource_swf.content.height;
+							resource_swf.content.height = 300; 
+							
+							resource_swf.width	 = resource_swf.content.width;
+							resource_swf.height	 = resource_swf.content.height;
+							}
+							if (resource_swf.content.width>300) 
+							{
+							resource_swf.content.height = ( resource_swf.content.height * 300 ) / resource_swf.content.width;
+							resource_swf.content.width = 300; 
+							
+							resource_swf.width	 = resource_swf.content.width;
+							resource_swf.height	 = resource_swf.content.height;
+							}
+							*/
+							var w:Number = resource_swf.content.width;
+							var h:Number = resource_swf.content.height; 
+							
+							if (resource_swf_worig < 0)
+							{
+								resource_swf_worig = resource_swf.content.width;
+								resource_swf_horig = resource_swf.content.height;
+							}
+							
+							if (h>300) 
+							{
+								w = ( w * 300 ) / h;
+								h = 300; 
+							}
+							if (w>300) 
+							{
+								h = ( h * 300 ) / w;
+								w = 300; 
+							}
+							
+							if (resource_swf_load_complete)
+							{	
+								trace("[COMPLETE] resize_contenedores[swf] -> pict["+resource_picture.width+"x"+resource_picture.height+"].visible="+resource_picture.visible+" - video["+resource_video.width+"x"+resource_video.height+"].visible="+resource_video.visible+" - swf["+resource_swf.width+"x"+resource_swf.height+"]("+resource_swf.content.width+"x"+resource_swf.content.height+").visible="+resource_swf.visible);
+								//resource_swf.content.width	 = resource_swf.contentWidth;
+								//resource_swf.content.height	 = resource_swf.contentHeight;
+								//resource_swf.width	 = resource_swf_worig;
+								//resource_swf.height	 = resource_swf_horig;
+								/*
+								resource_swf.content.width	 = w;
+								resource_swf.content.height	 = h;
+								resource_swf.width	 = w;
+								resource_swf.height	 = h;
+								resource_swf.includeInLayout = true;
+								*/
+							}
+							else
+							{
+								trace("[NO COMPL] resize_contenedores[swf] -> pict["+resource_picture.width+"x"+resource_picture.height+"].visible="+resource_picture.visible+" - video["+resource_video.width+"x"+resource_video.height+"].visible="+resource_video.visible+" - swf["+resource_swf.width+"x"+resource_swf.height+"]("+resource_swf.content.width+"x"+resource_swf.content.height+").visible="+resource_swf.visible);
+								resource_swf.content.width	 = w;
+								resource_swf.content.height	 = h;
+								resource_swf.width	 = w;
+								resource_swf.height	 = h;
+							}
+							
+							//resource_swf.validateSize(true);
+						} 
+						break;
+				}
+			}
+			
+			
+			protected function swf_resource_ioErrorHandler(event:IOErrorEvent):void
+			{
+				trace("[swf_resource_ioErrorHandler]");
+				resize_contenedores();
+			}
+			
+			protected function swf_resource_securityErrorHandler(event:SecurityErrorEvent):void
+			{
+				trace("[swf_resource_securityErrorHandler]");
+				resize_contenedores();
+			}
+			
+			protected function swf_resource_ErrorHandler(error:ErrorEvent):void
+			{
+				trace("[swf_resource_ErrorHandler]");
+				resize_contenedores();
+			}
+			
+			protected function resource_swf_progressHandler(event:ProgressEvent):void
+			{
+				//trace("resource_swf_progressHandler");
+				resize_contenedores();
+			}
+			protected function resource_swf_completeHandler(event:Event):void
+			{
+				// TODO Auto-generated method stub
+				resource_swf_load_complete = true;
+				resize_contenedores();
+			}
+		]]>
+	</fx:Script>
+	
+	<s:SWFLoader id="flashcontent" x="10" y="10" autoLoad="true" source="assets/OCE_isla_v0.11.swf"
+				 doubleClickEnabled="true"
+				 loadForCompatibility="true"
+				 complete="swfReady()" 
+				 visible="{Base.getinstance().isla_content_editor}"
+				 ioError="flashcontent_ioErrorHandler(event)" 
+				 securityError="flashcontent_securityErrorHandler(event)" 
+				 show="areacontentedition_showHandler(event)"
+				 hide="areacontentedition_hideHandler(event)"
+				 />
+	<s:Spacer />
+	
+	<s:TitleWindow id="resourceSelectionWindow" x="233" y="83" width="663" height="417"
+				   fontFamily="Verdana" fontSize="10" title="Librería de recursos"
+				   show="modifyResourcePreviewDependingOnResourceType(event)"
+				   visible="{Base.getinstance().versionEdition_selectedArea_resource_selection_windows_visible}"  
+				   close="resourceSelectionWindow_closeHandler(event)">
+		<s:List x="0" y="5" id="resourceList" width="283" height="308" alternatingItemColors="[#EEEEEE, #FFFFFFF]"
+				focusColor="#C0FCA6" fontFamily="Verdana" fontSize="10"  
+				lineThrough="false"
+				selectedIndex="3" selectionColor="#A9FF83" textAlign="left"
+				verticalScrollPolicy="on" dataProvider="{Base.getinstance().resources}" 
+				itemRenderer="com.innovae.oce.presentation.view.item_renderer.resourceList"
+				click="resource_list_click(event)"/>
+		<s:HGroup x="291" y="7" width="359" height="301" horizontalAlign="center"
+				  verticalAlign="middle">
+			<s:Image id="resource_picture"
+					 complete="imageResourceResize(event)" smooth="false"
+					 visible="{visible_picture}" />
+					<!-- source="{Base.getinstance().resourcesList_selectedResource.url}" /> -->
+			<s:VideoPlayer id="resource_video"
+						   visible="{visible_video}"
+						   width="0" height="0" source="{Base.getinstance().resourcesList_selectedResource.url}" />
+			<s:SWFLoader id="resource_swf" visible="{visible_swf}" width="0" height="0"
+						 maxWidth="300" maxHeight="300" 
+						 autoLoad="true"
+						 doubleClickEnabled="false"
+						 scaleContent="true"
+						 loadForCompatibility="true" 
+						 maintainAspectRatio="true"
+						 includeInLayout="true"
+						 ioError="swf_resource_ioErrorHandler(event)"
+						 progress="resource_swf_progressHandler(event)"
+						 securityError="swf_resource_securityErrorHandler(event)"
+						 complete="resource_swf_completeHandler(event)" />
+						 <!-- source="{Base.getinstance().resourcesList_selectedResource.url}"/> -->
+		</s:HGroup>
+		
+		<s:Label id="resourcesLibrary_selectedResourceName" x="292" y="328" fontWeight="bold"
+				 text="{Base.getinstance().i18n_txt.getValue('resourcesLibrary_selectedResourceName')}"/>
+		<s:Label id="resourcesLibrary_selectedResourceProps" x="292" y="313"
+				 fontWeight="bold"
+				 text="{Base.getinstance().i18n_txt.getValue('resourcesLibrary_selectedResourceProps')}"/>
+		<s:Label x="345" y="328" width="307" fontWeight="normal"
+				 text="{Base.getinstance().resourcesList_selectedResource.name}"/>
+		<s:Label id="resourcesLibrary_selectedResourceDimensions" x="292" y="342"
+				 fontWeight="bold"
+				 text="{Base.getinstance().i18n_txt.getValue('resourcesLibrary_selectedResourceDimensions')}"/>
+		<s:Label x="374" y="342" width="277" fontWeight="normal"
+				 text="{Base.getinstance().resourcesList_selectedResource_dimension}"/>
+		<s:Label id="resourcesLibrary_selectedResourceSize" x="293" y="356" fontWeight="bold"
+				 text="{Base.getinstance().i18n_txt.getValue('resourcesLibrary_selectedResourceSize')}"/>
+		<s:Label x="345" y="358" width="306" fontWeight="normal"
+				 text="{Base.getinstance().resourcesList_selectedResource_size}"/>
+		<s:Image x="6" y="318" source="@Embed('assets/inuse.png')" click="sendResourceToEditor()"/>
+		<s:Label id="resourcesLibrary_removeResource_text" x="27" y="322" color="#38D228" fontWeight="bold" text="{Base.getinstance().i18n_txt.getValue('resourcesLibrary_selectedResourceConfirmation_text')}" />
+		
+	</s:TitleWindow>
+	<s:TitleWindow id="areaContent_ask_for_name"
+				   visible="{Base.getinstance().contentArea_edition_ask_for_name}"
+				   x="279" y="200" width="558" height="320" fontFamily="Verdana" fontSize="10"
+				   title="Nombre del contenido de area">
+		<s:Label x="10" y="14" fontWeight="bold" text="Nombre de la versión:"/>
+		<s:Label x="10" y="60" fontWeight="bold" text="Descripción de la versión:"/>
+		<s:TextInput x="10" y="32" width="536" id="contentAreaEditionName"
+					 text="{Base.getinstance().versionEdition_selectedAreaContent.name}"/>
+		<s:Button x="476" y="256" label="Guardar" click="save_isla_version(event)"/>
+		<s:TextArea id="contentAreaEditionDescription" x="10" y="78" width="536" height="170"
+					text="{Base.getinstance().versionEdition_selectedAreaContent.description}"/>
+	</s:TitleWindow>
+</s:Group>

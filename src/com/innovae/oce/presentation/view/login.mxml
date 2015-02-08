@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:VGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" 
+		xmlns:mx="library://ns.adobe.com/flex/mx"
+		xmlns:spicefactory="http://www.spicefactory.org/parsley"
+		>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.oce.application.command.loginCommand;
+			import com.innovae.oce.application.event.loginEvent;
+			import com.innovae.oce.domain.datamodel.Base;
+			import com.innovae.services.orona.evolutio.type.T_authorization;
+			
+			import mx.controls.Alert;
+			
+			public function calllogin(username:String, password:String):void
+			{
+				if (Base.getinstance().logged)
+				{
+					Base.getinstance().closeSession("sessin_closed");
+				}
+				else
+				{
+					if(username != "" && password != "")
+					{
+						Base.getinstance().user = new T_authorization();
+						Base.getinstance().user.username = username;
+						Base.getinstance().user.password = password;
+						new loginEvent(loginEvent.LOGIN, username, password, "OCE").dispatch();
+					}
+					else
+					{
+						Alert.show(Base.getinstance().i18n_txt.getValue("incomplet_form_notification_text"),Base.getinstance().i18n_txt.getValue("incomplet_form_notification_title"), Alert.OK);
+					}	
+				}
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+	</fx:Declarations>
+
+	<s:Label color="#EDFFBD" fontFamily="Verdana" fontSize="10" text="Nombre de usuario:"/>
+	<s:TextInput id="login_username_textinput" width="154" borderColor="#69DE5D"
+				 chromeColor="#D4FFBD" contentBackgroundAlpha="0.6" contentBackgroundColor="#EDFFBD"
+				 fontFamily="Verdana" fontSize="10" text="{Base.getinstance().user.username}" />
+	<s:Label color="#EDFFBD" fontFamily="Verdana" fontSize="10" text="Contraseña:"/>
+	<s:TextInput id="login_password_textinput" x="710" y="61" width="154" borderColor="#69DE5D"
+				 chromeColor="#D4FFBD" contentBackgroundAlpha="0.6" contentBackgroundColor="#EDFFBD"
+				 displayAsPassword="true" fontFamily="Verdana" fontSize="10"
+				 text="{Base.getinstance().user.password}"
+				 enter="{calllogin(login_username_textinput.text, login_password_textinput.text)}" />
+	<!-- <s:Image x="872" y="65" backgroundAlpha="0.0" smooth="true" source="@Embed('assets/lock.png')" click="{calllogin(login_username_textinput.text, login_password_textinput.text)}"/> -->
+	<mx:Button id="Identificar" x="604" y="21" width="151" label="{Base.getinstance().login_button_text}" chromeColor="#0B7600"
+			   click="{calllogin(login_username_textinput.text, login_password_textinput.text)}"
+			   color="#EDFFBD" 
+			   focusColor="#72FF00" 
+			   fontFamily="Verdana" 
+			   fontSize="10" />
+	
+</s:VGroup>

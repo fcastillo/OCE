@@ -1,0 +1,821 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="768" initialize="efectosDeVisibilidad(event)">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.oce.application.event.removeVersionStyleEvent;
+			import com.innovae.oce.domain.datamodel.Base;
+			import com.innovae.services.orona.evolutio.type.T_area;
+			import com.innovae.services.orona.evolutio.type.T_detailedversion;
+			import com.innovae.services.orona.evolutio.type.T_directory_style;
+			import com.innovae.services.orona.evolutio.type.T_floor;
+			import com.innovae.services.orona.evolutio.type.T_version_style;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.ColorPickerEvent;
+			import mx.events.DragEvent;
+			import mx.events.FlexEvent;
+			
+			import spark.events.IndexChangeEvent;
+			import spark.events.TextOperationEvent;
+			
+			private var temporizador1segundo:Timer;
+
+			import flash.filters.GlowFilter;
+			
+			protected function img_rollOverHandler(evt:MouseEvent):void {
+				Image(evt.currentTarget).filters = [new GlowFilter(0x40b30e,1.0,6.0,6.0,5,1,false,false)];
+			}
+			
+			protected function img1_rollOutHandler(evt:MouseEvent):void {
+				Image(evt.currentTarget).filters = [];
+			}
+			
+			protected function previsualizarClick(event:MouseEvent):void
+			{
+				//	OronaModel.getInstance().Vista("previsualizar_version_editada");
+				//	Base.getInstance().Vista("previsualizar_version_editada");
+				//	Base.getinstance().showVersionPreview();//urko
+				
+				//	Base.getinstance().versionOp(Base.getinstance().version_op_preview, data.id);
+				//	Base.getinstance().versionOp(Base.getinstance().version_op_preview, 2);
+			}
+			
+			protected function volverClick():void
+			{
+				Base.getinstance().preShowVersionMenu();
+			}
+			
+			protected function prepareSaveDetailedVersion():void
+			{
+				if (Base.getinstance().detailedVersion.version_style.name == "")
+				{
+					var temp1:ArrayCollection = Base.getinstance().versionStyleTemplates;
+					for (var i:int = 0; i<temp1.length; i++)
+					{
+						if ((temp1[i] as T_version_style).name == "default")
+						{
+							var version_style:T_version_style = new T_version_style();
+							version_style = (temp1[i] as T_version_style);
+							Base.getinstance().detailedVersion.version_style = version_style; 
+						}
+					}
+				}
+				
+				//Base.getinstance().detailedVersion.directory_style = new T_directory_style();
+				//var temp:T_detailedversion = Base.getinstance().detailedVersion;
+				if (checkFloorDirectory())
+				{
+					Base.getinstance().detailedVersion.version.name = versionName.text;
+					Base.getinstance().detailedVersion.show_floor_info = versionShowFloorInfo.selected;
+					ShowSaveWindow();
+				}
+				else
+				{
+					trace("directorio mal ordenado");
+				}
+			}
+			
+			public function checkFloorDirectory():Boolean
+			{
+				/**** SE DESHABILITA ORDENAMIENTO FORZADO DE DIRECTORIO PARA PERMITIR CARACTERES***/
+				/*
+				var show_position_anterior:int = parseInt((Base.getinstance().detailedVersion.floordirectory.getItemAt(0) as T_floor).show_position);
+				if ((Base.getinstance().detailedVersion.floordirectory.getItemAt(0) as T_floor).show_position == null)
+				{
+					Alert.show("El directorio del edificio no se encuentra bien ordenado: el último piso no tiene un número de piso asignado.");
+					return false;
+				}
+				else if ((Base.getinstance().detailedVersion.floordirectory.getItemAt(0) as T_floor).show_position == "")
+				{
+					Alert.show("El directorio del edificio no se encuentra bien ordenado: el último piso no tiene un número de piso asignado.");
+					return false;
+				}
+				else
+				{
+					show_position_anterior++;
+					for each (var piso:T_floor in Base.getinstance().detailedVersion.floordirectory)
+					{
+						trace(piso.show_position);
+					}
+					// for each (var piso:T_floor in Base.getinstance().detailedVersion.floordirectory)
+					for (var i:int = 0; i<Base.getinstance().detailedVersion.floordirectory.length; i++)
+					{
+						var temp:T_floor = Base.getinstance().detailedVersion.floordirectory.getItemAt(i) as T_floor;
+						if ((Base.getinstance().detailedVersion.floordirectory.getItemAt(i) as T_floor).show_position == null)
+						{
+							trace("es null -> asignación de valor secuencial");
+							(Base.getinstance().detailedVersion.floordirectory.getItemAt(i) as T_floor).show_position = (show_position_anterior - 1).toString();
+						}
+						else if ((Base.getinstance().detailedVersion.floordirectory.getItemAt(i) as T_floor).show_position == "")
+						{
+							trace("es null -> asignación de valor secuencial");
+							(Base.getinstance().detailedVersion.floordirectory.getItemAt(i) as T_floor).show_position = (show_position_anterior - 1).toString();
+						}
+						var show_position_actual:int = parseInt((Base.getinstance().detailedVersion.floordirectory.getItemAt(i) as T_floor).show_position);
+						trace("show_position_actual: "+show_position_actual+" - show_position_anterior: "+show_position_anterior);
+						if ( show_position_actual > show_position_anterior)
+						{
+							Alert.show("El directorio del edificio no se encuentra bien ordenado: el piso '"+show_position_actual+"' tiene un valor mayor a su piso superior '"+show_position_anterior+"'.","Error en el orden del directorio.");  
+							return false;
+						}
+						else
+						{
+							show_position_anterior = show_position_actual;
+						}
+						
+					}
+					return true;
+				}
+				/***********************************************/
+				return true;
+			}
+			
+			protected function editarArea(event:MouseEvent, id_area:int):void
+			{
+				Base.getinstance().versionEdition_preAsignedAreaContent = new T_area();
+				Base.getinstance().versionEdition_selectedAreaContent	= new T_area();
+				if ((Base.getinstance().versionEdition_isEditSentido) || (Base.getinstance().versionEdition_selectedFloor != null))
+				{
+					trace(id_area);
+					Base.getinstance().versionedition_selectedAreaContentType = id_area;
+					Base.getinstance().getAreas(id_area);
+					Base.getinstance().versionEdition_hiderCanvas_visibile = true;
+					Base.getinstance().versionEdition_areaContentSelection_visibile = true;
+					Base.getinstance().versionEdition_floorDirectoryStyleSelection_visibile = false;
+					Base.getinstance().versionEdition_versionSaveAs_visibile = false;
+					Base.getinstance().versionEdition_configureVersionStyleTemplate_visible = false;
+				}
+				else
+				{
+					Alert.show("Seleccione un piso o un sentido para editar su contenido de area.");	
+				}
+			}
+			
+			protected function cambiarEstiloClick(event:MouseEvent):void
+			{
+				//Base.getinstance().getVersionStyleTemplates();
+				Base.getinstance().versionEdition_hiderCanvas_visibile = true;
+				Base.getinstance().versionEdition_areaContentSelection_visibile = false;
+				Base.getinstance().versionEdition_floorDirectoryStyleSelection_visibile = false;
+				Base.getinstance().versionEdition_versionSaveAs_visibile = false;
+				Base.getinstance().versionEdition_configureVersionStyleTemplate_visible = true;
+			}
+			
+			protected function cambiarEstiloDirectorioClick(event:MouseEvent):void
+			{
+				Base.getinstance().getDirectoryStyles();
+				Base.getinstance().versionEdition_hiderCanvas_visibile = true;
+				Base.getinstance().versionEdition_areaContentSelection_visibile = false;
+				Base.getinstance().versionEdition_floorDirectoryStyleSelection_visibile = true;
+				Base.getinstance().versionEdition_versionSaveAs_visibile = false;
+				Base.getinstance().versionEdition_configureVersionStyleTemplate_visible = false;
+				changeFloorDirectoryStyle();
+			}
+			
+			protected function efectosDeVisibilidad(event:FlexEvent):void
+			{
+				hideTitleWindows();				
+				temporizador1segundo = new Timer(1000,1);
+				temporizador1segundo.addEventListener(TimerEvent.TIMER_COMPLETE, temporizador1segundoHandler);
+				temporizador1segundo.start();
+			}
+			private function temporizador1segundoHandler(event:TimerEvent):void 
+			{
+				//trace("tick - "+resaltarTexto.getStyle("color").toString(16));	
+				if (resaltarTexto.getStyle("color").toString(16) == "5bff15")
+				{
+					resaltarTexto.setStyle("color", "black");
+				}
+				else
+				{
+					resaltarTexto.setStyle("color", "0x5bff15");
+				}
+				temporizador1segundo.reset();
+				temporizador1segundo.start();
+			}
+			
+			private function hideTitleWindows():void
+			{
+				Base.getinstance().versionEdition_hiderCanvas_visibile = false;
+				Base.getinstance().versionEdition_areaContentSelection_visibile = false;
+				Base.getinstance().versionEdition_floorDirectoryStyleSelection_visibile = false;
+				Base.getinstance().versionEdition_versionSaveAs_visibile = false;
+				Base.getinstance().versionEdition_configureVersionStyleTemplate_visible = false;
+			}
+			
+			private function ShowSaveWindow():void
+			{
+				Base.getinstance().versionEdition_hiderCanvas_visibile = true;
+				Base.getinstance().versionEdition_areaContentSelection_visibile = false;
+				Base.getinstance().versionEdition_floorDirectoryStyleSelection_visibile = false;
+				Base.getinstance().versionEdition_versionSaveAs_visibile = true;
+				Base.getinstance().versionEdition_configureVersionStyleTemplate_visible = false;
+			}
+			
+			protected function updateSelectedFloor():void
+			{
+				Base.getinstance().versionEdition_selectedFloor.name = selectedFloorName.text;
+				Base.getinstance().versionEdition_selectedFloor.description = selectedFloorDescription.text;
+				Base.getinstance().versionEdition_selectedFloor.aditional_info = selectedFloorAditionalInfo.text;
+				Base.getinstance().versionEdition_selectedFloor.show_position = selectedFloorShowPosition.text;
+				//trace("Base: "+Base.getinstance().versionEdition_selectedFloor.show_floor_info );
+				//trace("cb: "+selectedFloorShowFloorInfo.selected);
+				Base.getinstance().versionEdition_selectedFloor.show_floor_info = selectedFloorShowFloorInfo.selected;
+				//trace("Base: "+Base.getinstance().versionEdition_selectedFloor.show_floor_info );
+				Base.getinstance().updateSelectedFloor();
+			}
+			
+			/*protected function modifySelectedFloorShowFloorInfo(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				Base.getinstance().modifySelectedFloorShowFloorInfo(selectedFloorShowFloorInfo.selected);
+			}*/
+			
+			protected function saveDirectoryStyle(event:MouseEvent):void
+			{
+				Base.getinstance().selectedDirectoryStyle();
+				hideTitleWindows();
+			}
+			
+			protected function bordercolor_changeHandler(event:ColorPickerEvent):void
+			{
+				Base.getinstance().versionEdition_selectedVersionStyle.border_color = event.currentTarget.selectedItem;
+				Base.getinstance().versionEdition_selectedVersionStyleChanged = true;
+			}
+			
+			protected function textcolor_changeHandler(event:ColorPickerEvent):void
+			{
+				Base.getinstance().versionEdition_selectedVersionStyle.text_color = event.currentTarget.selectedItem;
+				Base.getinstance().versionEdition_selectedVersionStyleChanged = true;
+			}
+			
+			protected function dir_text_color_changeHandler(event:ColorPickerEvent):void
+			{
+				Base.getinstance().versionEdition_selectedVersionStyle.dir_text_color = event.currentTarget.selectedItem;
+				Base.getinstance().versionEdition_selectedVersionStyleChanged = true;
+			}
+			
+			protected function dir_up_color_changeHandler(event:ColorPickerEvent):void
+			{
+				Base.getinstance().versionEdition_selectedVersionStyle.dir_up_color = event.currentTarget.selectedItem;
+				Base.getinstance().versionEdition_selectedVersionStyleChanged = true;
+			}
+			
+			protected function dir_down_color_changeHandler(event:ColorPickerEvent):void
+			{
+				Base.getinstance().versionEdition_selectedVersionStyle.dir_down_color = event.currentTarget.selectedItem;
+				Base.getinstance().versionEdition_selectedVersionStyleChanged = true;
+			}
+			
+			protected function backgroundcolor_changeHandler(event:ColorPickerEvent):void
+			{
+				Base.getinstance().versionEdition_selectedVersionStyle.background_color = event.currentTarget.selectedItem;
+				Base.getinstance().versionEdition_selectedVersionStyleChanged = true;
+			}
+			
+			protected function saveConfigureVersionStyle(event:MouseEvent):void
+			{
+				var exists:Boolean = false;
+				
+				var versionStyle_for_save:T_version_style = new T_version_style();
+				versionStyle_for_save.name = version_style_name.text;
+				versionStyle_for_save.text_font = "";
+				versionStyle_for_save.text_size = text_size.value;
+				versionStyle_for_save.text_color = text_color.selectedColor.toString();
+				versionStyle_for_save.border_color = border_color.selectedColor.toString();
+				versionStyle_for_save.background_color = background_color.selectedColor.toString();
+				versionStyle_for_save.anim_speed = anim_speed.value;
+				versionStyle_for_save.floor_per_page = floor_per_page_stepper.value;
+				versionStyle_for_save.dir_up_color = dir_up_color.selectedColor.toString();
+				versionStyle_for_save.dir_down_color = dir_down_color.selectedColor.toString();
+				versionStyle_for_save.dir_text_color = dir_text_color.selectedColor.toString();
+				
+				Base.getinstance().versionEdition_selectedVersionStyle = versionStyle_for_save;
+				
+				for each (var versionStyle:T_version_style in Base.getinstance().versionStyleTemplates)
+				{
+					trace(Base.getinstance().versionEdition_selectedVersionStyle.name+" == "+versionStyle.name);
+					if (Base.getinstance().versionEdition_selectedVersionStyle.name == versionStyle.name) { exists = true; }
+				}
+				
+				if (exists) 
+				{
+					Alert.show("Actualmente existe un estilo con este nombre.\nSi desea sobreescribir el estilo existente pulse aceptar.\nEn otro caso, pulse cancelar.", "Guardar el estilo", Alert.YES|Alert.NO, this, alertSaveVersionStyle);
+				}
+				else
+				{
+					Base.getinstance().saveVersionStyle();
+				}
+			}
+			
+			private function alertSaveVersionStyle(evt:CloseEvent):void 
+			{
+				if (evt.detail == Alert.YES) 
+				{
+					Base.getinstance().saveVersionStyle();
+				}
+			}
+			
+			protected function version_style_name_changeHandler(event:TextOperationEvent):void
+			{
+				Base.getinstance().versionEdition_selectedVersionStyle.name = version_style_name.text;	
+				Base.getinstance().versionEdition_selectedVersionStyleChanged = true;
+			}
+			
+			protected function saveVersion(event:MouseEvent):void
+			{
+				
+				//añadido iñaki 2013/04/15
+				//hay que preguntar si alguno de los pisos tiene showposition vacia antes de guardar la versión
+				if(Base.getinstance().detailedVersion.floordirectory.length == 0)
+				{
+					Alert.show("La versión no tiene ningún piso creado, por favor, añada pisos a la versión.");
+				}
+				else
+				{
+					var algunoVacio : Boolean = false;
+					trace("Recorremos los "+Base.getinstance().detailedVersion.floordirectory.length+" pisos del directorio para buscar uno con showposition vacio!");
+					for(var i:int = 0;i<Base.getinstance().detailedVersion.floordirectory.length;i++)
+					{
+						trace("***_*** "+Base.getinstance().detailedVersion.floordirectory.getItemAt(i).show_position);
+						if(Base.getinstance().detailedVersion.floordirectory.getItemAt(i).show_position == null)
+						{
+							trace("NULL!!");
+							algunoVacio = true;
+						}
+					}
+					if(algunoVacio)
+					{
+						Alert.show("Uno o más pisos no tienen un número de piso asignado. Por favor, asigne un número de piso a cada piso.");
+						hideTitleWindows();
+					}
+					else
+					{
+						if(version_new_name.text == "")
+						{
+							Alert.show("Antes de guardar especifíque un nombre para la versión");
+						}
+						else
+						{
+							Base.getinstance().detailedVersion.version.name = version_new_name.text;
+							Base.getinstance().detailedVersion.version.description = version_new_description.text;
+							if (!Base.getinstance().detailedVersionIsNew || Base.getinstance().checkVersionNameNoDuplicated(Base.getinstance().detailedVersion.version.name))
+							{
+								hideTitleWindows();
+								Base.getinstance().saveDetailedVersion();
+								Base.getinstance().showVersionMenu();
+							}
+							else
+							{
+								Alert.show("Ya existe una versión con este nombre.");
+							}
+						}
+					}
+					
+				}
+			}
+			/*
+			protected function sentido_changeHandler(event:IndexChangeEvent):void
+			{
+				trace("sentido_changeHandler["+event.newIndex+"]");
+				//Base.getinstance().versionEdition_selectedUp_Stop_Down = event.newIndex;
+				var temp:T_floor = Base.getinstance().versionEdition_selectedFloor;
+				for (var i:int = 0; i < Base.getinstance().versionEdition_selectedFloor.areas.length; i++)
+				{
+					trace("["+Base.getinstance().versionEdition_selectedFloor.areas[i].id+"]"+Base.getinstance().versionEdition_selectedFloor.areas[i].name);
+					if ((Base.getinstance().versionEdition_selectedFloor.areas[i] as T_area).sentido == event.newIndex)
+					{
+						Base.getinstance().versionEdition_selectedAreaContent = (Base.getinstance().versionEdition_selectedFloor.areas[i] as T_area);
+						trace("selected_area...["+Base.getinstance().versionEdition_selectedAreaContent.id+"]["+Base.getinstance().versionEdition_selectedAreaContent.name+"]["+Base.getinstance().versionEdition_selectedAreaContent.sentido+"]");
+					}
+				}
+			}
+			*/
+			
+			protected function selectedFloor_showFloorInfo():void
+			{
+				Base.getinstance().versionEdition_selectedFloor.show_floor_info = !Base.getinstance().versionEdition_selectedFloor.show_floor_info;
+			}
+			
+			protected function selectedVersion_showFloorInfo():void
+			{
+				Base.getinstance().detailedVersion.show_floor_info = !Base.getinstance().detailedVersion.show_floor_info;
+				selectedFloorShowFloorInfo.enabled  = !Base.getinstance().detailedVersion.show_floor_info;
+				//selectedFloorShowFloorInfo.selected = Base.getinstance().detailedVersion.show_floor_info;
+				if (Base.getinstance().detailedVersion.show_floor_info)
+				{
+					for each (var floor:T_floor in Base.getinstance().detailedVersion.floordirectory)
+					{
+						floor.show_floor_info = true;
+					}
+				}
+			}
+			
+			protected function version_style_font_changeHandle(event:IndexChangeEvent):void
+			{
+				Base.getinstance().versionEdition_selectedVersionStyle.text_font = "";
+				Base.getinstance().versionEdition_selectedVersionStyle_text_font_selectedIndex = 0;
+				Base.getinstance().versionEdition_selectedVersionStyleChanged = true;
+			}
+			
+			protected function floorDirectoryStyleChanged(event:IndexChangeEvent):void
+			{
+	
+				if (event.target.selectedItems.length == 1)
+				{
+					var selected_directory_style:T_directory_style = event.target.selectedItems[0];
+					Base.getinstance().versionEdition_preselectedDirectoryStyle = selected_directory_style;
+					Base.getinstance().detailedVersion.directory_style = selected_directory_style;
+					changeFloorDirectoryStyle();
+					
+				}
+			}
+			
+			private function changeFloorDirectoryStyle():void
+			{
+				
+				switch(Base.getinstance().detailedVersion.directory_style.name)
+				{
+					case "default":  directory_style_swfloader.visible = true; directory_style_swfloader.load("assets/directory_styles/directory_style_default.swf");break;
+					case "neutro": directory_style_swfloader.visible = true; directory_style_swfloader.load("assets/directory_styles/directory_style_neutro.swf");break;
+					case "informal": directory_style_swfloader.visible = true; directory_style_swfloader.load("assets/directory_styles/directory_style_informal.swf");break;
+					case "moderno": directory_style_swfloader.visible = true; directory_style_swfloader.load("assets/directory_styles/directory_style_moderno.swf");break;
+				}
+			}
+			
+			private const SELECTED_FLOOR_DESCRIPTION_MAX_LINES:uint = 7;
+			
+			private function selectedFloorDescriptiontextChangeHandler(event:Event):void {
+				//Split the string into an array of lines
+				var lines:Array = selectedFloorDescription.text.split("\n");
+				//If there are too many lines...
+				if (lines.length > SELECTED_FLOOR_DESCRIPTION_MAX_LINES) {
+					//Clear the existing text
+					selectedFloorDescription.text = "";
+					//Then insert MAX_LINES of the previous text
+					for (var i:uint=0; i<SELECTED_FLOOR_DESCRIPTION_MAX_LINES; i++) {
+						selectedFloorDescription.text += lines[i] + "\n";
+					}
+					//Finally, move the cursor to the end of input, as
+					//it is reset to position 0 when the text is modified.
+					selectedFloorDescription.selectRange(selectedFloorDescription.text.length, selectedFloorDescription.text.length);
+				}
+			}
+			
+			protected function floor_per_page_stepper_changeHandler(event:Event):void
+			{
+				// TODO Auto-generated method stub
+				Base.getinstance().versionEdition_selectedVersionStyle.floor_per_page = floor_per_page_stepper.value; 
+				Base.getinstance().versionEdition_selectedVersionStyleChanged = true;
+			}
+			
+			protected function text_font_showHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				trace("CHOW! "+Base.getinstance().versionEdition_selectedVersionStyle.text_font);
+				for (var i:int = 0; i<Base.getinstance().fonts.length; i++)
+				{
+					if (Base.getinstance().fonts[i] == Base.getinstance().versionEdition_selectedVersionStyle.text_font)
+					{
+						Base.getinstance().versionEdition_selectedVersionStyle_text_font_selectedIndex = i;
+					}
+				}
+				trace(Base.getinstance().versionEdition_selectedVersionStyle_text_font_selectedIndex);
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		
+	</fx:Declarations>
+	<s:BorderContainer id="area1" x="20" y="88" width="107" height="221" backgroundAlpha="0.2"
+					   backgroundColor="#5bff15" borderWeight="2" contentBackgroundAlpha="0.0" click="editarArea(event,1)">
+		<s:Label x="16" y="65" backgroundAlpha="0.9" color="#999999" fontFamily="Arial"
+				 fontSize="120" text="1"/>
+	</s:BorderContainer>
+	<s:BorderContainer id="area2" x="125" y="88" width="51" height="75" backgroundAlpha="0.4"
+					   backgroundColor="#5bff15" borderWeight="2"  >
+		<s:Label x="10" y="18" color="#999999" fontFamily="Arial" fontSize="46" text="2"/>
+	</s:BorderContainer>
+	<s:BorderContainer id="area3" x="125" y="161" width="51" height="75" backgroundAlpha="0.5"
+					   backgroundColor="#5bff15" borderWeight="2" contentBackgroundAlpha="0.0"  click="editarArea(event,3)">
+		<s:Label x="10" y="19" color="#999999" fontFamily="Arial" fontSize="46" text="3"/>
+	</s:BorderContainer>
+	<s:Image x="20" y="40" click="cambiarEstiloClick(event)" smooth="true"
+			 source="@Embed('assets/estilos.png')"
+			 rollOver="img_rollOverHandler(event);"
+			 rollOut="img1_rollOutHandler(event);" />
+	
+	<s:Label x="40" y="44" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+			 text="Plantilla de estilo de la versión." /> <!--click="cambiarEstiloClick(event)"-->
+	<s:Label x="54" y="70" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+			 text="sobre el área de un piso para editarla." click="cambiarEstiloClick(event)"/>
+	<s:Label id="resaltarTexto" x="20" y="70" click="cambiarEstiloClick(event)" fontFamily="Verdana"
+			 fontSize="10" fontWeight="bold" text="Pulse" textDecoration="none"/>
+	<s:Label x="186" y="129" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+			 text="Directorio del edificio:"/>
+	<s:Label x="370" y="150" fontFamily="Verdana" fontSize="10" fontWeight="normal"
+			 text="Añadir piso"/>
+	<s:Label x="370" y="171" fontFamily="Verdana" fontSize="10" fontWeight="normal"
+			 text="Eliminar piso"/>
+	<s:Image x="351" y="167" width="16" height="16" source="@Embed('assets/less.png')" click="{Base.getinstance().removeFloor();}" rollOver="img_rollOverHandler(event);"
+			 rollOut="img1_rollOutHandler(event);"/>
+	<s:Image x="184" y="295" source="@Embed('assets/estilos.png')" click="cambiarEstiloDirectorioClick(event)" rollOver="img_rollOverHandler(event);"
+			 rollOut="img1_rollOutHandler(event);"/>
+	<s:Label x="204" y="298" width="138" fontFamily="Verdana" fontSize="10" fontWeight="normal"
+			 text="Estilo del directorio."/>
+	<s:Image x="184" y="87" source="@Embed('assets/up.png')" click="{Base.getinstance().editWay(Base.getinstance().sentido_up)}" rollOver="img_rollOverHandler(event);"
+			 rollOut="img1_rollOutHandler(event);"/>
+	<s:Label x="204" y="90" width="220" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+			 text="Contenido de sentido ascendente" /> <!-- click="{Base.getinstance().editWay(Base.getinstance().sentido_up)}"-->
+	<s:Image x="184" y="105" source="@Embed('assets/down.png')" click="{Base.getinstance().editWay(Base.getinstance().sentido_down)}" rollOver="img_rollOverHandler(event);"
+			 rollOut="img1_rollOutHandler(event);"/>
+	<s:Label x="205" y="108" width="220" fontFamily="Verdana" fontSize="10" fontWeight="bold" text="Contenido de sentido descendente" /> <!--click="{Base.getinstance().editWay(Base.getinstance().sentido_down)}"-->
+	<s:List id="floorDirectory" x="184" y="146" width="158" height="145"
+			alternatingItemColors="[#EEEEEE, #FFFFFFF]"
+			dataProvider="{Base.getinstance().detailedVersion.floordirectory}"
+			dragComplete="{Base.getinstance().updateFloorDirectory();}"
+			dragEnabled="true" dragMoveEnabled="true"
+			dropEnabled="true" focusColor="#E2FED5" fontFamily="Verdana" fontSize="10"
+			itemRenderer="com.innovae.oce.presentation.view.item_renderer.versionEditionFloorListIR"
+			selectedIndex="{Base.getinstance().versionEdition_piso_seleccionado_index}"
+			lineThrough="false" rollOverColor="#E2FED5" selectionColor="#E2FED5"
+			textAlign="center" verticalScrollPolicy="on">
+	</s:List>
+	<s:Image x="351" y="146" width="16" height="16" source="@Embed('assets/add.png')" click="{Base.getinstance().addFloor();}" rollOver="img_rollOverHandler(event);"
+			 rollOut="img1_rollOutHandler(event);"/>
+	<s:Panel x="456" y="10" width="283" height="310" fontFamily="Verdana" fontSize="10"
+			 title="Propiedades del piso seleccionado">
+		<s:Label x="10" y="11" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Número de piso a mostrar:"/>
+		<s:Label x="10" y="33" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Nombre:"/>
+		<!--<s:Label x="121" y="10" fontFamily="Verdana" fontSize="10" fontWeight="normal" text="{Base.getinstance().versionEdition_selectedFloor.position}"/>-->
+		<s:TextInput id="selectedFloorShowPosition" x="170" y="5" width="101"
+					 enabled="{Base.getinstance().versionEdition_piso_seleccionado}"
+					 fontFamily="Verdana" fontSize="10" fontWeight="normal" maxChars="2"
+					 text="{Base.getinstance().versionEdition_selectedFloor.show_position}"
+					 textAlign="center"/><!-- restrict="0-9\.\-" -->
+		<s:TextInput id="selectedFloorName" x="85" y="28" width="186"
+					 enabled="{Base.getinstance().versionEdition_piso_seleccionado}" maxChars="19"
+					 text="{Base.getinstance().versionEdition_selectedFloor.name}"/>
+		<s:Label x="10" y="58" height="15" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Descripción:"/>
+		<s:Label x="31" y="192" height="15" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Previsualizar" click="previsualizarClick(event)" visible="false"/>
+		<s:TextInput id="selectedFloorAditionalInfo" x="86" y="51" width="185" visible="false"
+					 text="{Base.getinstance().versionEdition_selectedFloor.aditional_info}" enabled="{Base.getinstance().versionEdition_piso_seleccionado}"/>
+		<s:TextArea id="selectedFloorDescription" x="10" y="73" width="261" height="135"
+					enabled="{Base.getinstance().versionEdition_piso_seleccionado}" maxChars="225"
+					text="{Base.getinstance().versionEdition_selectedFloor.description}"
+					verticalScrollPolicy="on"
+					change="selectedFloorDescriptiontextChangeHandler(event)"
+					/>
+		<!--<s:Image x="10" y="188" source="@Embed('assets/play.png')" click="previsualizarClick(event)" visible="false" rollOver="img_rollOverHandler(event);"
+				 rollOut="img1_rollOutHandler(event);"/>-->
+		<s:CheckBox id="selectedFloorShowFloorInfo" x="10" y="215"
+					label="Mostrar información de directorio en el piso."
+					selected="{Base.getinstance().detailedVersion.show_floor_info || Base.getinstance().versionEdition_selectedFloor.show_floor_info}"
+					change="selectedFloor_showFloorInfo()" 
+					enabled="{Base.getinstance().versionEdition_piso_seleccionado &amp;&amp; !Base.getinstance().detailedVersion.show_floor_info}"/>
+		<s:Button x="138" y="243" width="133" label="Aplicar cambios" chromeColor="#E2FED5" click="updateSelectedFloor()"
+				  focusColor="#E2FED5" fontFamily="Verdana" fontSize="11" icon="assets/estilos.png"/>
+		<s:BorderContainer id="edicion_sentido_area" x="0" y="0" width="281" height="277" visible="{Base.getinstance().versionEdition_isEditSentido}" >
+			<!-- visible="false"> -->
+			<!-- visible="{Base.getinstance().versionEdition_isEditSentido}" -->
+			<s:Label id="texto_edicion_sentido" x="29" y="26" text="{Base.getinstance().versionEdition_isEditSentidoLabel}"/>
+			<s:Image x="180" y="175" width="100" height="100" smooth="true" smoothingQuality="high"
+					 source="@Embed('assets/arrows_rotated_big.png')"/>
+		</s:BorderContainer>
+	</s:Panel>
+	<s:BorderContainer id="area4" x="125" y="234" width="51" height="75" backgroundAlpha="0.6"
+					   backgroundColor="#5bff15" borderWeight="2" contentBackgroundAlpha="0.0"  click="editarArea(event,4)">
+		<s:Label x="10" y="15" color="#999999" fontFamily="Arial" fontSize="46" text="4"/>
+	</s:BorderContainer>
+	<s:Button x="553" y="343" width="95" label="Guardar" chromeColor="#E2FED5" click="prepareSaveDetailedVersion()"
+			  focusColor="#E2FED5" fontFamily="Verdana" fontSize="11" icon="@Embed('assets/estilos.png')"/>
+	<s:Button x="656" y="343" width="84" label="Volver" chromeColor="#E2FED5" click="volverClick()"
+			  focusColor="#E2FED5" fontFamily="Verdana" fontSize="11" icon="@Embed('assets/estilos.png')"/>
+	<s:Label x="20" y="16" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+			 text="Nombre de la versión:"/>
+	<s:TextInput id="versionName" x="150" y="10" width="180" fontFamily="Verdana" fontSize="10"
+				 text="{Base.getinstance().detailedVersion.version.name}"/>
+	<s:CheckBox id="versionShowFloorInfo" x="184" y="316" label="Mostrar información de"
+				chromeColor="#E2FED5" focusColor="#E2FED5" fontFamily="Verdana" fontSize="10"
+				change="selectedVersion_showFloorInfo()" 
+				selected="{Base.getinstance().detailedVersion.show_floor_info}"/>
+	<s:Label x="202" y="334" fontFamily="Verdana" fontSize="10" text="directorio en todos los"/>
+	<s:Label x="202" y="347" fontFamily="Verdana" fontSize="10" text="pisos."/>
+	
+	
+	<mx:Canvas id="hiderCanvas" width="900" height="600" alpha="0.6" backgroundAlpha="1.0"
+			   backgroundColor="#FFFFFF" borderAlpha="0.0" borderVisible="false"
+			   contentBackgroundColor="#FFFFFF"  visible="{Base.getinstance().versionEdition_hiderCanvas_visibile}"/>
+	
+	
+	<s:TitleWindow id="areaContentSelection" x="71" y="47" width="627" height="352" borderVisible="true"
+				   close="hideTitleWindows()" fontFamily="Verdana" fontSize="10"
+				   title="Edición de área:"  visible="{Base.getinstance().versionEdition_areaContentSelection_visibile}">
+		<s:List x="10" y="47" width="287" height="139"
+				alternatingItemColors="[#EEEEEE, #FFFFFFF]" focusColor="#A9FF83"
+				fontFamily="Verdana" fontSize="10" lineThrough="false" rollOverColor="#A9FF83"
+				selectedIndex="2" selectionColor="#A9FF83" textAlign="center"
+				verticalScrollPolicy="on" 
+				dataProvider="{Base.getinstance().areas}"
+				itemRenderer="com.innovae.oce.presentation.view.item_renderer.versionEditionAreaContentSelection"/>
+		<s:Label x="10" y="11" fontWeight="bold" text="Area asignada:"/>
+		<s:Label x="31" y="31" fontWeight="bold" text="Seleccione un contenido con anterioridad:"/>
+		<s:Label x="312" y="31" fontWeight="bold" text="Descripción del area seleccionada:"/>
+		<s:Label x="28" y="221" fontWeight="bold" text="Modifique el contenido de area seleccionado."  click="{Base.getinstance().areaContentOp(Base.getinstance().area_content_modify, false);}"/>
+		<s:Label x="28" y="200" fontWeight="bold" text="Asignar el contenido de area seleccionado."  click="{Base.getinstance().areaContentOp(Base.getinstance().area_content_set, false);}"/>
+		<s:Image id="icon_mod0" x="9" y="196" click="{Base.getinstance().areaContentOp(Base.getinstance().area_content_set, false);}" source="@Embed('assets/add.png')"/>
+		<s:Label id="versionSentidoAsignedContentArea" x="100" y="11" fontWeight="normal" text="{Base.getinstance().versionEdition_preAsignedAreaContent.name}"/>
+		<s:Image id="icon_mod" x="9" y="217" click="{Base.getinstance().areaContentOp(Base.getinstance().area_content_modify, false);}" source="@Embed('assets/add.png')"/>
+		<s:Label x="28" y="243" fontWeight="bold" text="Cree un nuevo contenido de area a partir del seleccionado." click="{Base.getinstance().areaContentOp(Base.getinstance().area_content_new_from, false);}"/>
+		<s:Label x="28" y="265" fontWeight="bold" text="Cree un contenido de area nuevo." click="{Base.getinstance().areaContentOp(Base.getinstance().area_content_new, false);}"/>
+		<s:Label x="28" y="287" fontWeight="bold" text="Eliminar el contenido de area asignado." click="{Base.getinstance().areaContentOp(Base.getinstance().area_content_remove, false);}"/>
+		<s:Image id="icon_new0" x="9" y="283" click="{Base.getinstance().areaContentOp(Base.getinstance().area_content_remove, false);}" source="@Embed('assets/add.png')" rollOver="img_rollOverHandler(event);"
+				 rollOut="img1_rollOutHandler(event);"/>
+		<s:Image id="icon_new" x="9" y="261" click="{Base.getinstance().areaContentOp(Base.getinstance().area_content_new, false);}" source="@Embed('assets/add.png')" rollOver="img_rollOverHandler(event);"
+				 rollOut="img1_rollOutHandler(event);"/>
+		<s:Image id="icon_new_from" x="9" y="239" click="{Base.getinstance().areaContentOp(Base.getinstance().area_content_new_from, false);}" source="@Embed('assets/add.png')" rollOver="img_rollOverHandler(event);"
+				 rollOut="img1_rollOutHandler(event);"/>
+		<s:Image x="10" y="27" source="@Embed('assets/open.png')"/>
+		<s:TextArea x="310" y="47" width="303" height="139" text="{Base.getinstance().versionEdition_selectedAreaContent.description}"/>
+		<s:Button x="531" y="281" width="84" label="Volver" chromeColor="#E2FED5" click="{hideTitleWindows();}" focusColor="#E2FED5" fontFamily="Verdana" fontSize="11" icon="@Embed('assets/estilos.png')"/>
+	</s:TitleWindow>
+	
+	
+	
+	
+	
+	<s:TitleWindow id="versionSaveAs" x="216" y="10" width="363" height="352" borderVisible="true"
+				   close="hideTitleWindows()" fontFamily="Verdana" fontSize="10"
+				   title="Datos de la versión:" visible="{Base.getinstance().versionEdition_versionSaveAs_visibile}">
+		<s:Label x="10" y="10" fontWeight="bold" text="Nombre de la versión:"/>
+		<s:Label x="9" y="56" fontWeight="bold" text="Descripción:" />
+		<mx:HRule x="10" y="277" width="341" height="11"/>
+		<s:TextInput id="version_new_name" x="10" y="28" width="341"
+					 text="{Base.getinstance().detailedVersion.version.name}"/>
+		<s:TextArea id="version_new_description" x="10" y="74" width="342" height="196"
+					text="{Base.getinstance().detailedVersion.version.description}"/>
+		<s:Button x="164" y="288" width="95" label="Guardar" id="saveButton" chromeColor="#E2FED5" 
+				  focusColor="#E2FED5" fontFamily="Verdana" fontSize="11" icon="assets/estilos.png" click="saveVersion(event)"/>
+		<s:Button x="267" y="288" width="84" label="Volver" chromeColor="#E2FED5" 
+				  focusColor="#E2FED5" fontFamily="Verdana" fontSize="11" icon="assets/estilos.png" click="hideTitleWindows()"/>
+	</s:TitleWindow>
+	
+	<s:TitleWindow id="configureVersionStyleTemplate" x="91" y="16" width="600" height="441" borderVisible="true"
+				   close="hideTitleWindows()" fontFamily="Verdana" fontSize="10"
+				   title="Configuración de la plantilla de estilo:" visible="{Base.getinstance().versionEdition_configureVersionStyleTemplate_visible}">
+
+		<s:List x="13" y="73" width="235" height="290"
+				alternatingItemColors="[#EEEEEE, #FFFFFFF]" focusColor="#A9FF83"
+				fontFamily="Verdana" fontSize="10" lineThrough="false" rollOverColor="#A9FF83"
+				selectedIndex="2" selectionColor="#A9FF83" textAlign="center"
+				verticalScrollPolicy="on"
+				dataProvider="{Base.getinstance().versionStyleTemplates}"
+				itemRenderer="com.innovae.oce.presentation.view.item_renderer.versionEditionVersionStyleTemplateIR"
+				/>
+		
+		<s:Label x="269" y="57" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Nombre del estilo:"/>
+		<s:Label x="12" y="56" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Estilos existentes:"/>
+		<s:Label x="10" y="15" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Estilo asignado a la versión:"/>
+		<s:Label x="268" y="115" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Tamaño del texto:" visible="false"/>
+		<s:Label x="269" y="117" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Color del texto:"/>
+		<s:Label x="271" y="202" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Velocidad de la animación:" visible="false"/>
+		<mx:ColorPicker x="374" y="111" 
+						id="text_color"
+						selectedItem="{int(Base.getinstance().versionEdition_selectedVersionStyle.text_color)}"
+						change="textcolor_changeHandler(event)"
+				/>
+		<s:Label x="268" y="238" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Configuración del directorio:"/>
+		<s:Label x="268" y="260" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Color superior del directorio:"/>
+		<mx:ColorPicker x="444" y="251" 
+						id="dir_up_color"
+						selectedItem="{int(Base.getinstance().versionEdition_selectedVersionStyle.dir_up_color)}"
+						change="dir_up_color_changeHandler(event)"
+				/>
+		<s:Label x="268" y="284" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Color inferior del directorio:"/>
+		<mx:ColorPicker x="444" y="276" 
+						id="dir_down_color"
+						selectedItem="{int(Base.getinstance().versionEdition_selectedVersionStyle.dir_down_color)}"
+						change="dir_down_color_changeHandler(event)"
+				/>
+		<s:Label x="268" y="308" width="166" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Color del texto del directorio:"/>
+		<mx:ColorPicker x="444" y="301" 
+						id="dir_text_color"
+						selectedItem="{int(Base.getinstance().versionEdition_selectedVersionStyle.dir_text_color)}"
+						change="dir_text_color_changeHandler(event)"
+				/>
+		<s:Label x="271" y="178" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Color de fondo:"/>
+		<mx:ColorPicker x="375" y="170" 
+						id="background_color"
+						selectedItem="{int(Base.getinstance().versionEdition_selectedVersionStyle.background_color)}"
+						change="backgroundcolor_changeHandler(event)"		
+				/>
+		<s:Label x="270" y="144" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Color de bordes:"/>
+		<mx:ColorPicker x="375" y="140" id="border_color" selectedItem="{int(Base.getinstance().versionEdition_selectedVersionStyle.border_color)}" change="bordercolor_changeHandler(event)"/>
+		<s:TextInput x="376" y="52" 
+					 width="212" 
+					 id="version_style_name" 
+					 text="{Base.getinstance().versionEdition_selectedVersionStyle.name}"
+					 change="version_style_name_changeHandler(event)"/>
+		<s:NumericStepper id="text_size" x="376" y="109" width="64" height="22"
+						  change="{Base.getinstance().versionEdition_selectedVersionStyle.text_size = text_size.value;}"
+						  maximum="99" minimum="11" textAlign="center" visible="false"
+						  value="{Base.getinstance().versionEdition_selectedVersionStyle.text_size}"/>
+		<s:NumericStepper id="anim_speed" x="431" y="194" width="46"
+						  change="{Base.getinstance().versionEdition_selectedVersionStyle.anim_speed = anim_speed.value;Base.getinstance().versionEdition_selectedVersionStyleChanged = true;}"
+						  maximum="99" minimum="6" textAlign="center"
+						  value="{Base.getinstance().versionEdition_selectedVersionStyle.anim_speed}" visible="false"/>
+		<s:Label x="268" y="331" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Pisos a mostrar en el directorio por planta:"/>
+		<s:NumericStepper id="floor_per_page_stepper" x="521" y="325" width="49"
+						  change="floor_per_page_stepper_changeHandler(event)"
+						  maximum="10" minimum="1" textAlign="center"
+						  value="{Base.getinstance().versionEdition_selectedVersionStyle.floor_per_page}"/>
+		
+		
+		
+		<mx:HRule x="268" y="213" width="320" height="11"/>
+		<mx:HRule x="268" y="357" width="320" height="11"/>
+		<s:Button x="165" y="371" width="95" label="Asignar" chromeColor="#E2FED5" 
+				  enabled="{!Base.getinstance().versionEdition_selectedVersionStyleChanged}"
+				  focusColor="#E2FED5" fontFamily="Verdana" fontSize="11" icon="assets/estilos.png" click="hideTitleWindows();Base.getinstance().setVersionStyle()"/>
+		<s:Button x="268" y="371" width="114" label="Guardar" chromeColor="#E2FED5" 
+				  focusColor="#E2FED5" fontFamily="Verdana" fontSize="11" icon="assets/estilos.png" 
+				  enabled="{Base.getinstance().versionEdition_selectedVersionStyleChanged &amp;&amp; (Base.getinstance().versionEdition_selectedVersionStyle.name != Base.getinstance().DefaultVersionStyleName)}"
+				  click="saveConfigureVersionStyle(event)"/>
+		<s:Button x="388" y="371" width="106" label="Eliminar" chromeColor="#E2FED5" 
+				  focusColor="#E2FED5" fontFamily="Verdana" fontSize="11" icon="assets/estilos.png" click="Base.getinstance().deleteVersionStyle()"
+				  />
+		<s:Button x="502" y="371" width="84" label="Volver" chromeColor="#E2FED5" 
+				  focusColor="#E2FED5" fontFamily="Verdana" fontSize="11" icon="assets/estilos.png" click="hideTitleWindows()"/>
+		<s:BorderContainer x="407" y="115" width="180" height="70"
+						   backgroundColor="{background_color.selectedColor}"
+						   borderColor="{border_color.selectedColor}" borderWeight="2">
+		</s:BorderContainer>
+		<s:Label id="versionStyleExample" x="407" y="117" width="180" height="66"
+				
+				 color="{text_color.selectedColor}" 
+				 fontFamily="{Base.getinstance().versionEdition_selectedVersionStyle.text_font}" 
+				 fontSize="{Base.getinstance().versionEdition_selectedVersionStyle.text_size}"
+				 
+				 text="Lorem ipsum" textAlign="center" verticalAlign="middle"/>
+		<s:TextInput x="176" y="10" width="412" id="version_style_name0" 
+					 text="{Base.getinstance().detailedVersion.version_style.name}" editable="false"/>
+		<mx:HRule x="11" y="35" width="577" height="11"/>
+	</s:TitleWindow>
+	
+	<s:TitleWindow id="floorDirectoryStyleSelection" x="192" y="56" width="411" height="282" borderVisible="true"
+				   close="hideTitleWindows()" fontFamily="Verdana" fontSize="10"
+				   title="Estilo de directorio:"  visible="{Base.getinstance().versionEdition_floorDirectoryStyleSelection_visibile}">
+		<s:List x="10" y="67" width="250" height="143" alternatingItemColors="[#EEEEEE, #FFFFFFF]"
+				dataProvider="{Base.getinstance().directoryStyles}" focusColor="#A9FF83"
+				fontFamily="Verdana" fontSize="10"
+				itemRenderer="com.innovae.oce.presentation.view.item_renderer.versoinEditionFloorDirectoryStyleSelection"
+				lineThrough="false" rollOverColor="#A9FF83" selectionColor="#A9FF83"
+				textAlign="center" verticalScrollPolicy="on"
+				change="floorDirectoryStyleChanged(event)"/>
+		<s:Label x="31" y="38" fontWeight="bold" text="Seleccione un estilo con el que se"/>
+		<s:Label x="130" y="10" fontWeight="normal" text="{Base.getinstance().detailedVersion.directory_style.name}"/>
+		<s:Label x="10" y="10" fontWeight="bold" text="Estilo seleccionado:"/>
+		<s:Label x="31" y="50" fontWeight="bold" text="mostrará la información del piso:"/>
+		<s:Image x="10" y="39" source="@Embed('assets/open.png')"/>
+		<s:Button x="212" y="220" width="95" label="Guardar" chromeColor="#E2FED5"
+				  click="saveDirectoryStyle(event)" focusColor="#E2FED5" fontFamily="Verdana"
+				  fontSize="11" icon="assets/estilos.png"/>
+		<s:Button x="315" y="220" width="84" label="Volver" chromeColor="#E2FED5"
+				  click="hideTitleWindows()" focusColor="#E2FED5" fontFamily="Verdana"
+				  fontSize="11" icon="assets/estilos.png"/>
+		<s:BorderContainer id="preview_estilo_directorio" x="269" y="32" width="134" height="178" backgroundAlpha="0.2"
+						   borderWeight="2" contentBackgroundAlpha="0.0"  >
+			<s:VGroup left="0" top="0" width="130" height="178" gap="0" horizontalAlign="center"
+					  paddingBottom="0" paddingLeft="0" paddingRight="0" paddingTop="0"
+					  verticalAlign="top">
+				<s:SWFLoader id="directory_style_swfloader" width="130" height="178" autoLoad="true"
+							 doubleClickEnabled="false" scaleContent="true" verticalAlign="middle"/>
+			</s:VGroup>
+		</s:BorderContainer>
+	</s:TitleWindow>
+</s:Group>

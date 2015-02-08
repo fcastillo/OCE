@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="976" height="400">
+
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.oce.domain.datamodel.Base;
+			import com.innovae.services.orona.evolutio.type.T_detailedversion;
+			import com.innovae.services.orona.evolutio.type.T_version;
+			
+			import flash.filters.GlowFilter;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			
+			protected function img_rollOverHandler(evt:MouseEvent):void {
+				Image(evt.currentTarget).filters = [new GlowFilter(0x40b30e,1.0,6.0,6.0,5,1,false,false)];
+			}
+			
+			protected function img1_rollOutHandler(evt:MouseEvent):void {
+				Image(evt.currentTarget).filters = [];
+			}
+						
+			protected function newVersion_clickHandler(event:MouseEvent):void
+			{
+				Base.getinstance().versionOp(Base.getinstance().version_op_new, -1);	
+			}
+			
+			protected function newIslaVersion_clickHandler(event:MouseEvent):void
+			{
+				Base.getinstance().versionOp(Base.getinstance().version_op_new_isla, -1);
+			}
+			
+			protected function versionSelected_handler():void
+			{
+				trace("**************click**************");
+				if (version_lists_tab.selectedChild.label == "VDAP")
+				{
+					if (versionvdap_list.selectedItem != null)
+					{
+						version_name.text =  (versionvdap_list.selectedItem as T_version).name;
+						version_description.text = (versionvdap_list.selectedItem as T_version).description;
+						Base.getinstance().versionMenu_selectedVersion = (versionvdap_list.selectedItem as T_version);
+						Base.getinstance().versionMenu_getSelectedVersion();
+					}
+				}
+				/* else if (version_lists_tab.selectedChild.label == "Isla")
+				{
+					if (versionisla_list.selectedItem != null)
+					{
+						version_name.text =  (versionisla_list.selectedItem as T_version).name;
+						version_description.text = (versionisla_list.selectedItem as T_version).description;
+						Base.getinstance().versionMenu_selectedVersion = (versionisla_list.selectedItem as T_version);
+						Base.getinstance().versionMenu_getSelectedVersion();
+					}
+				} */
+				
+				
+			}
+			
+			protected function editVersion_handler():void
+			{
+				if (version_lists_tab.selectedChild.label == "VDAP")
+				{
+					if (versionvdap_list.selectedItem != null)
+					{
+						trace("editVersion type -> "+Base.getinstance().versionMenu_selectedVersion.type);
+						if (Base.getinstance().versionMenu_selectedVersion.type == Base.getinstance().version_type_vdap.toString())
+						{
+							Base.getinstance().versionEdition = true;
+							Base.getinstance().versionOp(Base.getinstance().version_op_modify, (versionvdap_list.selectedItem as T_version).id);	
+						}
+						else if (Base.getinstance().versionMenu_selectedVersion.type == Base.getinstance().version_type_isla.toString())
+						{
+							Base.getinstance().versionEdition = true;
+							Base.getinstance().versionOp(Base.getinstance().version_op_modify_isla, (versionvdap_list.selectedItem as T_version).id);
+						}
+					}
+				}
+				/* else if (version_lists_tab.selectedChild.label == "Isla")
+				{
+					if (versionisla_list.selectedItem != null)
+					{
+						trace("editVersion type -> "+Base.getinstance().versionMenu_selectedVersion.type);
+						if (Base.getinstance().versionMenu_selectedVersion.type == Base.getinstance().version_type_vdap.toString())
+						{
+							Base.getinstance().versionEdition = true;
+							Base.getinstance().versionOp(Base.getinstance().version_op_modify, (versionisla_list.selectedItem as T_version).id);	
+						}
+						else if (Base.getinstance().versionMenu_selectedVersion.type == Base.getinstance().version_type_isla.toString())
+						{
+							Base.getinstance().versionEdition = true;
+							Base.getinstance().versionOp(Base.getinstance().version_op_modify_isla, (versionisla_list.selectedItem as T_version).id);
+						}
+					}
+				} */
+				
+				
+			}
+			
+			protected function newFromVersion_handler():void
+			{
+				if (version_lists_tab.selectedChild.label == "VDAP")
+				{
+					if (versionvdap_list.selectedItem != null)
+					{
+						if (Base.getinstance().versionMenu_selectedVersion.type == Base.getinstance().version_type_vdap.toString())
+						{
+							Base.getinstance().versionEdition = true;
+							Base.getinstance().isla_content_editor = false;
+							Base.getinstance().versionOp(Base.getinstance().version_op_new_from, (versionvdap_list.selectedItem as T_version).id);	
+						}
+						else if (Base.getinstance().versionMenu_selectedVersion.type == Base.getinstance().version_type_isla.toString())
+						{
+							Base.getinstance().versionEdition = false;
+							Base.getinstance().isla_content_editor = true;
+							Base.getinstance().versionOp(Base.getinstance().version_op_new_isla_from, (versionvdap_list.selectedItem as T_version).id);
+						}
+					}
+				}
+				/* else if (version_lists_tab.selectedChild.label == "Isla")
+				{
+					if (versionisla_list.selectedItem != null)
+					{
+						if (Base.getinstance().versionMenu_selectedVersion.type == Base.getinstance().version_type_vdap.toString())
+						{
+							Base.getinstance().versionEdition = true;
+							Base.getinstance().isla_content_editor = false;
+							Base.getinstance().versionOp(Base.getinstance().version_op_new_from, (versionisla_list.selectedItem as T_version).id);	
+						}
+						else if (Base.getinstance().versionMenu_selectedVersion.type == Base.getinstance().version_type_isla.toString())
+						{
+							Base.getinstance().versionEdition = false;
+							Base.getinstance().isla_content_editor = true;
+							Base.getinstance().versionOp(Base.getinstance().version_op_new_isla_from, (versionisla_list.selectedItem as T_version).id);
+						}
+					}
+				} */
+				
+				
+			}
+			
+			protected function previewVersion_handler():void
+			{
+				if (version_lists_tab.selectedChild.label == "VDAP")
+				{
+					if (versionvdap_list.selectedItem != null)
+					{
+						if (Base.getinstance().versionMenu_selectedVersion.type == Base.getinstance().version_type_vdap.toString())
+						{
+							Base.getinstance().versionOp(Base.getinstance().version_op_preview, (versionvdap_list.selectedItem as T_version).id);
+						}
+						else if (Base.getinstance().versionMenu_selectedVersion.type == Base.getinstance().version_type_isla.toString())
+						{
+							Base.getinstance().versionEdition = false;
+							Base.getinstance().isla_content_editor = true;
+							Base.getinstance().versionOp(Base.getinstance().version_op_preview_isla, (versionvdap_list.selectedItem as T_version).id);
+						}
+					}
+				}
+				/* else if (version_lists_tab.selectedChild.label == "Isla")
+				{
+					if (versionisla_list.selectedItem != null)
+					{
+						if (Base.getinstance().versionMenu_selectedVersion.type == Base.getinstance().version_type_vdap.toString())
+						{
+							Base.getinstance().versionOp(Base.getinstance().version_op_preview, (versionisla_list.selectedItem as T_version).id);
+						}
+						else if (Base.getinstance().versionMenu_selectedVersion.type == Base.getinstance().version_type_isla.toString())
+						{
+							Base.getinstance().versionEdition = false;
+							Base.getinstance().isla_content_editor = true;
+							Base.getinstance().versionOp(Base.getinstance().version_op_preview_isla, (versionisla_list.selectedItem as T_version).id);
+						}
+					}
+				} */
+				
+				
+			}
+			
+			protected function deleteVersion_handler():void
+			{
+				if (version_lists_tab.selectedChild.label == "VDAP")
+				{
+					if (versionvdap_list.selectedItem != null)
+					{
+						Base.getinstance().versionOp(Base.getinstance().version_op_delete, (versionvdap_list.selectedItem as T_version).id);
+					}
+				}
+/* 				else if (version_lists_tab.selectedChild.label == "Isla")
+				{
+					if (versionisla_list.selectedItem != null)
+					{
+						Base.getinstance().versionOp(Base.getinstance().version_op_delete, (versionisla_list.selectedItem as T_version).id);
+					}
+				} */
+				
+			}
+			
+			protected function comprobarSelectedIndex():void
+			{
+				
+				trace("**************updated**************");
+				if (version_lists_tab.selectedChild.label == "VDAP")
+				{
+					if (versionvdap_list.selectedItem == null)
+					{
+						version_name.text = "";
+						version_description.text = "";
+						//Base.getinstance().versionMenu_selectedVersion = null;
+					}
+					else
+					{
+						Base.getinstance().versionMenu_getSelectedVersion();
+						versionvdap_list.selectedIndex = Base.getinstance().versionMenu_selectedVersion_index;
+					}
+				}
+				
+				/* else if (version_lists_tab.selectedChild.label == "Isla")
+				{
+					if (versionisla_list.selectedItem == null)
+					{
+						version_name.text = "";
+						version_description.text = "";
+						//Base.getinstance().versionMenu_selectedVersion = null;
+					}
+					else
+					{
+						Base.getinstance().versionMenu_getSelectedVersion();
+						versionisla_list.selectedIndex = Base.getinstance().versionMenu_selectedVersion_index;
+					}
+				} */
+				
+			}
+
+			
+			
+			
+			private function handleVersionTabChange():void
+			{
+				trace(version_lists_tab.selectedIndex + " Label: " + version_lists_tab.selectedChild.label);
+				version_name.text = "";
+				version_description.text = "";
+				
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+<!--	
+	<mx:DataGrid x="4" y="35" height="307" fontFamily="Verdana" fontSize="10"
+				id="version_list"
+				rollOverColor="#E2FED5" selectionColor="#E2FED5" sortableColumns="true"
+				dataProvider="{Base.getinstance().versiones}"
+				click="versionSelected_handler(event)">
+		<mx:columns>
+			<mx:DataGridColumn dataField="name" headerText="{Base.getinstance().i18n_txt.getValue('versionMenu_datagrid_header_title_name')}" sortable="true" width="300"/>
+			<mx:DataGridColumn dataField="created" headerText="{Base.getinstance().i18n_txt.getValue('versionMenu_datagrid_header_title_created')}" sortable="true" width="150" />
+			<mx:DataGridColumn dataField="last_modification" headerText="{Base.getinstance().i18n_txt.getValue('versionMenu_datagrid_header_title_last_modification')}" sortable="true" width="150"/>
+			<mx:DataGridColumn headerText="{Base.getinstance().i18n_txt.getValue('versionMenu_datagrid_header_title_modify')}" sortable="true" itemRenderer="com.innovae.oce.presentation.view.item_renderer.versionMenuModifyIR" width="80" />
+			<mx:DataGridColumn headerText="{Base.getinstance().i18n_txt.getValue('versionMenu_datagrid_header_title_delete')}" sortable="true" itemRenderer ="com.innovae.oce.presentation.view.item_renderer.versionMenuDeleteIR" width="80" />
+			<mx:DataGridColumn headerText="{Base.getinstance().i18n_txt.getValue('versionMenu_datagrid_header_title_new_from_existing_version')}" sortable="true" itemRenderer="com.innovae.oce.presentation.view.item_renderer.versionMenuNewFromExistingVersionIR" width="80" />
+			<mx:DataGridColumn headerText="{Base.getinstance().i18n_txt.getValue('versionMenu_datagrid_header_title_preview')}" sortable="true" itemRenderer="com.innovae.oce.presentation.view.item_renderer.versionMenuPreviewIR" width="80" />
+		</mx:columns>
+	</mx:DataGrid>
+-->
+
+	<s:Image x="5" y="10" source="@Embed('assets/add.png')" click="newVersion_clickHandler(event)" rollOver="img_rollOverHandler(event);" rollOut="img1_rollOutHandler(event);" />
+	<s:Image x="242" y="10" source="@Embed('assets/add.png')" click="newIslaVersion_clickHandler(event)" rollOver="img_rollOverHandler(event);" rollOut="img1_rollOutHandler(event);" visible="{Base.getinstance().allowIsla}"/>
+	<s:Label x="264" y="14" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+			 text="Crear una nueva versión VDAP Isla"  visible="{Base.getinstance().allowIsla}"/>
+	<s:Label x="27" y="14" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+			 text="Crear una nueva versión VDAP" /> <!--click="newVersion_clickHandler(event)"/>-->
+	<s:Panel x="535" y="35" width="431" height="317" fontFamily="Verdana" fontSize="10"
+			 title="Detalles de la versión seleccionada:">
+		<s:Image x="281" y="134" width="150" height="150" smooth="true"
+				 source="@Embed('assets/arrows_rotated_big.png')" />
+		<s:Label x="10" y="10" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Nombre de la versión:" click="newVersion_clickHandler(event)"/>
+		<s:Label x="10" y="64" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Descripción:" click="newVersion_clickHandler(event)"/>
+		<s:TextInput id="version_name" x="10" y="28" width="409" fontFamily="Verdana" fontSize="10" editable="false"/>
+		<s:TextArea id="version_description" x="10" y="78" width="409" height="111"
+					contentBackgroundAlpha="0.4" contentBackgroundColor="#FFFFFF" editable="false"/>
+		<s:Image x="10" y="197" source="@Embed('assets/edit.png')" click="editVersion_handler()"  rollOver="img_rollOverHandler(event);" rollOut="img1_rollOutHandler(event);" />
+		<s:Image x="10" y="218" source="@Embed('assets/new.png')" click="newFromVersion_handler()" rollOver="img_rollOverHandler(event);" rollOut="img1_rollOutHandler(event);" />
+		<s:Image x="10" y="240" source="@Embed('assets/play.png')" click="previewVersion_handler()" rollOver="img_rollOverHandler(event);" rollOut="img1_rollOutHandler(event);" />
+		<s:Image x="10" y="261" source="@Embed('assets/less.png')" click="deleteVersion_handler()" rollOver="img_rollOverHandler(event);" rollOut="img1_rollOutHandler(event);" />
+		<s:Label x="31" y="200" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Editar la versión." click="editVersion_handler()"/>
+		<s:Label x="31" y="221" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Crear una nueva versión a partir de esta." click="newFromVersion_handler()"/>
+		<s:Label x="31" y="243" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Previsualizar esta versión." click="previewVersion_handler()"/>
+		<s:Label x="31" y="264" fontFamily="Verdana" fontSize="10" fontWeight="bold"
+				 text="Eliminar esta versión." click="deleteVersion_handler()"/>
+		
+	</s:Panel>
+	<mx:TabNavigator id="version_lists_tab" x="4" y="35" width="514" height="317" 
+					 change="handleVersionTabChange()"
+					 
+					 >
+		<s:NavigatorContent width="100%" height="100%" label="VDAP">
+			<mx:DataGrid id="versionvdap_list" x="0" y="0" width="514" height="282"
+						 click="versionSelected_handler()"
+						 dataProvider="{Base.getinstance().versionesVDAP}" fontFamily="Verdana" fontSize="10"
+						 rollOverColor="#E2FED5" selectionColor="#E2FED5" sortableColumns="true"
+						 updateComplete="comprobarSelectedIndex()"
+						 selectedIndex="{Base.getinstance().versionMenu_selectedVersion_index}" 
+						 >
+				<mx:columns>
+					<mx:DataGridColumn dataField="name" headerText="{Base.getinstance().i18n_txt.getValue('versionMenu_datagrid_header_title_name')}" sortable="true" width="300"/>
+				</mx:columns>
+			</mx:DataGrid>
+		</s:NavigatorContent>
+		<!--
+		<s:NavigatorContent width="100%" height="100%" label="Isla"  visible="{Base.getinstance().allowIsla}">
+			<mx:DataGrid id="versionisla_list" x="0" y="0" width="514" height="282"
+						 click="versionSelected_handler()"
+						 dataProvider="{Base.getinstance().versionesISLA}" fontFamily="Verdana" fontSize="10"
+						 rollOverColor="#E2FED5" selectionColor="#E2FED5" sortableColumns="true"
+						 updateComplete="comprobarSelectedIndex()"
+						 selectedIndex="{Base.getinstance().versionMenu_selectedVersion_index}" 
+						 >
+				<mx:columns>
+					<mx:DataGridColumn dataField="name" headerText="{Base.getinstance().i18n_txt.getValue('versionMenu_datagrid_header_title_name')}" sortable="true" width="300"/>
+				</mx:columns>
+			</mx:DataGrid>
+		</s:NavigatorContent>
+		-->
+	</mx:TabNavigator>
+</s:Group>

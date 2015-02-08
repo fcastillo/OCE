@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark" 
+				xmlns:mx="library://ns.adobe.com/flex/mx" 
+				autoDrawBackground="true"
+				creationComplete="init(event)"
+				dataChange="init(event)">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.services.orona.evolutio.type.T_resource;
+			import com.innovae.oce.domain.datamodel.Base;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			protected function label1_clickHandler(event:MouseEvent):void
+			{
+				if (T_resource(data).encoded == 1) Base.getinstance().resourcesList_selectedResource = T_resource(data);
+			}
+			
+			protected function init(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				if (T_resource(data).used) {
+					trace("[recurso] en uso");
+					resource_used.visible = true;
+					resource_noused.visible = false;
+				}
+				else
+				{
+					trace("[recurso] no usado");
+					resource_used.visible = false;
+					resource_noused.visible = true;
+				}
+				
+				if(T_resource(data).type == Base.getinstance().video_resource_id)
+				{
+					if (T_resource(data).encoded != 1)
+					{
+						trace("[recurso] video no codificado");
+						resource_name_noencoded.visible = true;
+						resource_name_noencoded.percentWidth = 100;
+						resource_name_avaiable.visible = false;
+						resource_name_avaiable.percentWidth = 0;
+						resource_name_avaiable.width = 0;
+					}
+					else
+					{
+						trace("[recurso] video codificado");
+						resource_name_noencoded.visible = false;
+						resource_name_noencoded.width = 0;
+						//resource_name_noencoded.percentWidth = 0;
+						resource_name_avaiable.visible = true;
+						resource_name_avaiable.percentWidth = 100;
+					}
+				}
+				else if(T_resource(data).type == Base.getinstance().swf_resource_id)
+				{
+					trace("[recurso] swf");
+					resource_name_noencoded.visible = false;
+					resource_name_noencoded.width = 0;
+					//resource_name_noencoded.percentWidth = 0;
+					resource_name_avaiable.visible = true;
+					resource_name_avaiable.percentWidth = 100;
+				}
+				else
+				{
+					trace("[recurso] no video");
+					resource_name_noencoded.visible = false;
+					resource_name_noencoded.width = 0;
+					//resource_name_noencoded.percentWidth = 0;
+					resource_name_avaiable.visible = true;
+					resource_name_avaiable.percentWidth = 100;
+				}
+			}
+			
+			protected function no_encoded_show_alert(event:MouseEvent):void
+			{
+				Alert.show("El recurso no está disponible:\n Pendiente de codificación en el servidor.");
+				//Base.getinstance().resourcesList_selectedResource = T_resource(data);
+			}
+			
+		]]>
+	</fx:Script>
+	
+	
+	<s:HGroup horizontalAlign="center" verticalAlign="middle" width="100%" height="21">
+		<s:Image id="resource_used" width="16" height="16" source="@Embed('assets/inuse.png')"/>
+		<s:Image id="resource_noused" width="16" height="16" source="@Embed('assets/nouse.png')"/>
+		<s:Label id="resource_name_avaiable" width="100%" height="20" click="label1_clickHandler(event)" 
+				 text="{data.name}" verticalAlign="middle"/>
+		<s:Label id="resource_name_noencoded" width="100%" height="20"
+				 text="{data.name}" verticalAlign="middle"/>
+	</s:HGroup>
+	
+</s:ItemRenderer>

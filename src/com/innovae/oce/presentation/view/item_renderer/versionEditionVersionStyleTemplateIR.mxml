@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark" 
+				xmlns:mx="library://ns.adobe.com/flex/mx" 
+				autoDrawBackground="true">
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.oce.domain.datamodel.Base;
+			import com.innovae.services.orona.evolutio.type.T_version_style;
+			
+			protected function label2_clickHandler(event:MouseEvent):void
+			{
+				var data_temp:Object = new Object();
+				data_temp = data;
+				
+				Base.getinstance().versionEdition_selectedVersionStyle = new T_version_style();
+				Base.getinstance().versionEdition_selectedVersionStyle.id					 = (data_temp as T_version_style).id;
+				Base.getinstance().versionEdition_selectedVersionStyle.name					 = (data_temp as T_version_style).name;
+				Base.getinstance().versionEdition_selectedVersionStyle.text_font			 = (data_temp as T_version_style).text_font;
+				Base.getinstance().versionEdition_selectedVersionStyle.text_size			 = (data_temp as T_version_style).text_size;
+				Base.getinstance().versionEdition_selectedVersionStyle.text_color			 = (data_temp as T_version_style).text_color;
+				Base.getinstance().versionEdition_selectedVersionStyle.border_color			 = (data_temp as T_version_style).border_color;
+				Base.getinstance().versionEdition_selectedVersionStyle.background_color		 = (data_temp as T_version_style).background_color;
+				Base.getinstance().versionEdition_selectedVersionStyle.anim_speed			 = (data_temp as T_version_style).anim_speed;
+				Base.getinstance().versionEdition_selectedVersionStyle.floor_per_page 		 = (data_temp as T_version_style).floor_per_page;
+				Base.getinstance().versionEdition_selectedVersionStyle.dir_down_color 		 = (data_temp as T_version_style).dir_down_color;
+				Base.getinstance().versionEdition_selectedVersionStyle.dir_up_color 		 = (data_temp as T_version_style).dir_up_color;
+				Base.getinstance().versionEdition_selectedVersionStyle.dir_text_color 		 = (data_temp as T_version_style).dir_text_color;
+				Base.getinstance().versionEdition_selectedVersionStyleChanged				 = false;
+				
+				for (var i:int=0; i<Base.getinstance().fonts.length; i++)
+				{
+					//trace(Base.getinstance().fonts.getItemAt(i)+" - data: "+T_version_style(data).text_font+" - i:"+i+" - found["+Base.getinstance().versionEdition_selectedVersionStyle_text_font_selectedIndex+"]" );
+					if (Base.getinstance().fonts.getItemAt(i) == T_version_style(data).text_font )
+					{
+						trace(Base.getinstance().fonts.getItemAt(i)+" - data: "+T_version_style(data).text_font+" - i:"+i+" - found["+Base.getinstance().versionEdition_selectedVersionStyle_text_font_selectedIndex+"]" );
+						Base.getinstance().versionEdition_selectedVersionStyle_text_font_selectedIndex = i;
+					}
+				}
+				
+				
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:Label width="100%" height="20" text="{T_version_style(data).name}" textAlign="center"
+			 verticalAlign="middle"
+			 click="label2_clickHandler(event)"/>
+	
+</s:ItemRenderer>

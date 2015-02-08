@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		  xmlns:s="library://ns.adobe.com/flex/spark"
+		  xmlns:flexiframe="com.google.code.flexiframe.*"
+		  added="group1_addedHandler(event)"
+		  
+		  >
+	<fx:Script>
+		<![CDATA[
+			import com.innovae.oce.domain.datamodel.Base;
+			
+			import mx.events.FlexEvent;
+
+			public function update():void
+			{
+				var xmlPreview:XML = new XML(Base.getinstance().previewVersionXML);
+				xmlPreview..PLANTILLA.@estilo_directorio = "default";
+				preview.callIFrameFunction('loadPreview', [ xmlPreview.toString() ]);
+			}
+			
+			protected function group1_addedHandler(event:Event):void
+			{
+				var xmlPreview:XML = new XML(Base.getinstance().previewVersionXML);
+				xmlPreview..PLANTILLA.@estilo_directorio = "default";
+				preview.callIFrameFunction('loadPreview', [ xmlPreview.toString() ]);
+			}
+
+		]]>
+	</fx:Script> 
+	
+	<flexiframe:IFrame id="preview" 
+					   source="preview/index.html" 
+					   width="100%" height="100%" scaleX=".9" scaleY=".9"
+					   loadIndicatorClass="com.google.code.flexiframe.examples.SampleLoadIndicator">
+	</flexiframe:IFrame>
+	
+	<s:Spacer />
+	<s:TextArea id="log_preview" x="19" y="513" width="1061" height="245" borderColor="#FF0000" visible="false" />
+	
+</s:Group>
